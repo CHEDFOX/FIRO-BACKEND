@@ -1,19 +1,31 @@
 # Delivery Roadmap (Phased)
 
 The brief mandates phased delivery, and each phase is approved before the next.
-**We are here: Phase 1 (Architecture) — this document set.** Nothing below Phase 1
-is built until approved.
 
-## Phase 1 — Architecture ✅ (this deliverable)
+> **Build order decision (owner):** build **all backend logic first**, then do
+> the **visual frontend design last**. The Flutter renderer is still built in the
+> middle as a **bare-bones, unstyled test harness** so we can prove the backend's
+> screens work; the *premium visual design* is applied at the very end. This
+> reorders the phases below toward backend-first.
+
+**Status: Phase 2 (foundation) — in progress.** The backend now has a running,
+tested NestJS foundation (see [firo-backend README](../README.md)).
+
+## Phase 1 — Architecture ✅ (done)
 Decisions, trade-offs, risks, ADRs, module map, data model, BDUI contract, API +
-design-system conventions. Reviewable. **No application code.**
+design-system conventions. See [architecture/](architecture/README.md).
 
-## Phase 2 — Repository & foundation scaffolding
-- Monorepo layout (Nx) for `firo-backend`; app + worker skeletons.
-- Shared libs: response envelope, error model, pagination, UUIDv7 ids, result types.
-- OpenAPI 3.1 source of truth + TS/Dart codegen pipeline.
-- Postgres cluster config (PgBouncer + read replica), migration tooling, per-schema roles + boundary lint.
-- CI/CD (typecheck, lint, test, migrate, deploy), Terraform skeleton, observability wiring.
+## Phase 2 — Repository & foundation scaffolding 🚧 (in progress)
+- [x] NestJS/TypeScript app skeleton (`api` + `worker` entrypoints), strict TS.
+- [x] Shared kernel: response envelope, canonical error model + `AppError`,
+      cursor pagination, UUIDv7 ids, `Result` type.
+- [x] Global response-envelope interceptor + all-exceptions filter.
+- [x] Validated config (zod) + health/meta endpoints.
+- [x] CI (format check · lint · build · test) + unit + e2e tests (28 passing).
+- [ ] OpenAPI 3.1 source of truth + TS/Dart codegen pipeline.
+- [ ] Postgres wiring (PgBouncer + read replica), migration tooling, per-schema
+      roles + boundary lint.
+- [ ] Terraform skeleton, observability wiring.
 - **Gate:** capacity/cost model produced; the two un-run red-team lenses re-run.
 
 ## Phase 3 — Infrastructure
