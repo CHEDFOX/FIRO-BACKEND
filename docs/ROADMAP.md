@@ -49,10 +49,14 @@ component registry.
 ## Phase 7 — Authentication (end-to-end)
 Wire client auth to the Identity context; onboarding flow (BDUI) seeding Explorer DNA.
 
-## Then, module by module
-Catalog/Content (+ CMS + Media) → Personalization (DNA + Reco funnel) → Discovery
-(Search + Feed + Collections) → AI Gateway capabilities → Planning → Social →
-Commerce → Admin/Analytics.
+## Module build progress
+- **Identity** 🚧 — email/password auth, JWT access tokens, rotating refresh
+  tokens with reuse detection, RBAC guards, `/v1/auth/{register,login,refresh,
+  logout,me}`. Persistence is in-memory behind the repository ports; **Postgres
+  adapters and OAuth (Apple/Google) are the remaining pieces.**
+- Next: Catalog/Content (+ CMS + Media) → Personalization (DNA + Reco funnel) →
+  Discovery (Search + Feed + Collections) → AI Gateway → Planning → Social →
+  Commerce → Admin/Analytics.
 
 ## The first shippable slice (recommended target for Phases 4–7)
 A real user journey over a **real curated catalog**:

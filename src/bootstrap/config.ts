@@ -19,6 +19,20 @@ export const envSchema = z.object({
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   API_BASE_URL: z.string().url().default('http://localhost:3000'),
+
+  // --- Auth / JWT ---
+  // NOTE: HS256 with a shared secret for the foundation phase. The production
+  // target (ADR-0007 in platform docs) is asymmetric EdDSA with a published
+  // JWKS; the TokenIssuer port makes that swap isolated to infrastructure.
+  JWT_SECRET: z.string().min(16).default('dev-insecure-secret-change-me-please'),
+  JWT_ISSUER: z.string().default('firo.auth'),
+  JWT_AUDIENCE: z.string().default('firo.api'),
+  JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900), // 15m
+  JWT_REFRESH_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(60 * 60 * 24 * 30), // 30d
 });
 
 export type Env = z.infer<typeof envSchema>;
