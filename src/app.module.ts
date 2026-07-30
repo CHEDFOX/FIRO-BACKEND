@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from './bootstrap/config.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
+import { DiscoveryModule } from './modules/discovery/discovery.module';
 import { IdentityModule } from './modules/identity/identity.module';
 import { HealthModule } from './platform/health/health.module';
 import { MetaModule } from './platform/meta/meta.module';
@@ -23,8 +25,10 @@ import { ResponseEnvelopeInterceptor } from './shared/http/response-envelope.int
     MetaModule,
     // bounded contexts
     IdentityModule,
+    CatalogModule,
+    DiscoveryModule,
     // added in later phases:
-    // CatalogModule, PersonalizationModule, DiscoveryModule, ...
+    // PersonalizationModule, PlanningModule, SocialModule, ...
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { AppError } from '../../../../shared/errors/app-error';
 import { TOKEN_ISSUER, TokenIssuer } from '../../domain/token-issuer';
 import { RequestWithUser } from './authenticated-user';
-import { IS_PUBLIC_KEY } from './decorators';
+import { IS_OPTIONAL_AUTH_KEY, IS_PUBLIC_KEY } from './decorators';
 
 /**
  * Authenticates requests via a Bearer access token and attaches the principal
@@ -25,12 +25,22 @@ export class JwtAuthGuard implements CanActivate {
       return true;
     }
 
+    const isOptional = this.reflector.getAllAndOverride<boolean>(IS_OPTIONAL_AUTH_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const token = this.extractBearer(request.headers?.['authorization']);
     if (!token) {
+      if (isOptional) {
+        // Anonymous is allowed; the handler decides what to serve without a user.
+        return true;
+      }
       throw AppError.unauthenticated('auth.missing_token', 'Missing bearer token');
     }
 
+    // A supplied token must always be valid, even on an optional-auth route.
     request.user = await this.tokenIssuer.verifyAccessToken(token);
     return true;
   }

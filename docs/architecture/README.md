@@ -16,6 +16,7 @@ product brief, for review and approval before any implementation begins.
 8. [07 — Platform, Security & Observability](07-platform-security-observability.md)
 9. [08 — API & Design System](08-api-and-design-system.md)
 10. [09 — Challenges to the Brief](09-challenges-to-the-brief.md)
+11. [10 — The Personal World Map (3D)](10-world-map.md)
 
 ## Also
 

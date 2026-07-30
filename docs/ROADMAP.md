@@ -52,11 +52,19 @@ Wire client auth to the Identity context; onboarding flow (BDUI) seeding Explore
 ## Module build progress
 - **Identity** 🚧 — email/password auth, JWT access tokens, rotating refresh
   tokens with reuse detection, RBAC guards, `/v1/auth/{register,login,refresh,
-  logout,me}`. Persistence is in-memory behind the repository ports; **Postgres
-  adapters and OAuth (Apple/Google) are the remaining pieces.**
-- Next: Catalog/Content (+ CMS + Media) → Personalization (DNA + Reco funnel) →
-  Discovery (Search + Feed + Collections) → AI Gateway → Planning → Social →
-  Commerce → Admin/Analytics.
+  logout,me}`. **Remaining: Postgres adapters, OAuth (Apple/Google).**
+- **Catalog** 🚧 — country/region/place hierarchy, experiences with real
+  coordinates + shared taste taxonomy + season masks, a curated seed catalogue
+  (10 real destinations), browsing with tag/country/month filters and cursor
+  paging, detail pages. **Remaining: CMS, media pipeline, Postgres/PostGIS.**
+- **World Map** 🚧 — viewport query with zoom-aware clustering and a saved-only
+  mode. See [world map](architecture/10-world-map.md). **Remaining: PostGIS
+  adapter; the 3D globe client (visual phase).**
+- **Discovery (saves)** 🚧 — collections, idempotent save/unsave, per-user
+  isolation, the saved-pin set behind the personal map. **Remaining: search, the
+  composed feed, Postgres.**
+- Next: Personalization (Explorer DNA + reco funnel) → Search/Feed → AI Gateway →
+  Planning → Social → Commerce → Admin/Analytics.
 
 ## The first shippable slice (recommended target for Phases 4–7)
 A real user journey over a **real curated catalog**:
