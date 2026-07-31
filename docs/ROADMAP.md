@@ -63,8 +63,12 @@ Wire client auth to the Identity context; onboarding flow (BDUI) seeding Explore
 - **Discovery (saves)** 🚧 — collections, idempotent save/unsave, per-user
   isolation, the saved-pin set behind the personal map. **Remaining: search, the
   composed feed, Postgres.**
-- Next: Personalization (Explorer DNA + reco funnel) → Search/Feed → AI Gateway →
-  Planning → Social → Commerce → Admin/Analytics.
+- **Personalization** 🚧 — Explorer DNA (evidence-based, decaying,
+  exposure-normalised, tag-transfer learning), session intent, the heuristic
+  scorer behind a swappable `Scorer` port, and a feed with diversity, wildcards
+  and human-readable reasons. See [explorer DNA](architecture/11-explorer-dna.md).
+  **Remaining: multi-cluster DNA, learned tag correlations, async worker fold.**
+- Next: Search → AI Gateway → Planning → Social → Commerce → Admin/Analytics.
 
 ## The first shippable slice (recommended target for Phases 4–7)
 A real user journey over a **real curated catalog**:

@@ -17,6 +17,7 @@ product brief, for review and approval before any implementation begins.
 9. [08 — API & Design System](08-api-and-design-system.md)
 10. [09 — Challenges to the Brief](09-challenges-to-the-brief.md)
 11. [10 — The Personal World Map (3D)](10-world-map.md)
+12. [11 — Explorer DNA & the Personalised Feed](11-explorer-dna.md)
 
 ## Also
 

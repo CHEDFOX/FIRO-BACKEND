@@ -4,6 +4,7 @@ import { ConfigModule } from './bootstrap/config.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { DiscoveryModule } from './modules/discovery/discovery.module';
 import { IdentityModule } from './modules/identity/identity.module';
+import { PersonalizationModule } from './modules/personalization/personalization.module';
 import { HealthModule } from './platform/health/health.module';
 import { MetaModule } from './platform/meta/meta.module';
 import { AllExceptionsFilter } from './shared/http/all-exceptions.filter';
@@ -27,8 +28,9 @@ import { ResponseEnvelopeInterceptor } from './shared/http/response-envelope.int
     IdentityModule,
     CatalogModule,
     DiscoveryModule,
+    PersonalizationModule,
     // added in later phases:
-    // PersonalizationModule, PlanningModule, SocialModule, ...
+    // PlanningModule, SocialModule, CommerceModule, ...
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
