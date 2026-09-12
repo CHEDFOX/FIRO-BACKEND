@@ -7,10 +7,15 @@ import { SaveExperienceUseCase } from './application/save-experience.usecase';
 import { UnsaveExperienceUseCase } from './application/unsave-experience.usecase';
 import { COLLECTION_ITEM_REPOSITORY, COLLECTION_REPOSITORY } from './domain/collection';
 import { SavesController } from './infrastructure/http/saves.controller';
+import { repositoryProvider } from '../../infrastructure/database/repository-provider';
 import {
   InMemoryCollectionItemRepository,
   InMemoryCollectionRepository,
 } from './infrastructure/persistence/in-memory-collection.repository';
+import {
+  PostgresCollectionItemRepository,
+  PostgresCollectionRepository,
+} from './infrastructure/persistence/postgres-collection.repository';
 
 /**
  * Discovery bounded context: collections and saves today; search and the
@@ -24,8 +29,20 @@ import {
   imports: [IdentityModule, CatalogModule],
   controllers: [SavesController, MapController],
   providers: [
-    { provide: COLLECTION_REPOSITORY, useClass: InMemoryCollectionRepository },
-    { provide: COLLECTION_ITEM_REPOSITORY, useClass: InMemoryCollectionItemRepository },
+    InMemoryCollectionRepository,
+    InMemoryCollectionItemRepository,
+    PostgresCollectionRepository,
+    PostgresCollectionItemRepository,
+    repositoryProvider(
+      COLLECTION_REPOSITORY,
+      PostgresCollectionRepository,
+      InMemoryCollectionRepository,
+    ),
+    repositoryProvider(
+      COLLECTION_ITEM_REPOSITORY,
+      PostgresCollectionItemRepository,
+      InMemoryCollectionItemRepository,
+    ),
     SaveExperienceUseCase,
     UnsaveExperienceUseCase,
     ListSavedUseCase,

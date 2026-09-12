@@ -12,11 +12,16 @@ import { SESSION_INTENT_REPOSITORY } from './domain/session-intent';
 import { SIGNAL_REPOSITORY } from './domain/signal';
 import { OnboardingController } from './infrastructure/http/onboarding.controller';
 import { PersonalizationController } from './infrastructure/http/personalization.controller';
+import { repositoryProvider } from '../../infrastructure/database/repository-provider';
 import {
   InMemoryDnaRepository,
   InMemorySessionIntentRepository,
   InMemorySignalRepository,
 } from './infrastructure/persistence/in-memory-personalization.repository';
+import {
+  PostgresDnaRepository,
+  PostgresSignalRepository,
+} from './infrastructure/persistence/postgres-personalization.repository';
 
 /**
  * Personalization bounded context: Explorer DNA and the recommendation funnel.
@@ -28,8 +33,12 @@ import {
   imports: [IdentityModule, CatalogModule, DiscoveryModule],
   controllers: [PersonalizationController, OnboardingController],
   providers: [
-    { provide: DNA_REPOSITORY, useClass: InMemoryDnaRepository },
-    { provide: SIGNAL_REPOSITORY, useClass: InMemorySignalRepository },
+    InMemoryDnaRepository,
+    InMemorySignalRepository,
+    PostgresDnaRepository,
+    PostgresSignalRepository,
+    repositoryProvider(DNA_REPOSITORY, PostgresDnaRepository, InMemoryDnaRepository),
+    repositoryProvider(SIGNAL_REPOSITORY, PostgresSignalRepository, InMemorySignalRepository),
     { provide: SESSION_INTENT_REPOSITORY, useClass: InMemorySessionIntentRepository },
     { provide: SCORER, useClass: HeuristicScorer },
     RecordSignalUseCase,

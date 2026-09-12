@@ -1,0 +1,55 @@
+# Firo: API + PostgreSQL.
+#
+#   docker compose up -d --build
+#   docker compose exec api node dist/infrastructure/database/seed.js
+#
+# The database is NOT published to the host: only the API reaches it, over the
+# compose network. Exposing Postgres to the internet is how databases get found.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: firo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-firo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-firo}
+      # Postgres keeps its data here; the named volume below is what makes it
+      # survive `docker compose down` and image rebuilds.
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - firo-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-firo} -d ${POSTGRES_DB:-firo}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # Only reachable from the compose network — deliberately no `ports:`.
+
+  api:
+    build: .
+    container_name: firo-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        # Wait for the database to actually accept connections, not merely to
+        # have started, or the API fails its first migration on a cold boot.
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER:-firo}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-firo}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - '${API_PORT:-3000}:3000'
+
+volumes:
+  firo-db-data:
+    # Named volume: `docker compose down` keeps it. Removing it (`down -v`)
+    # destroys every account, save and taste profile.
+    name: firo-db-data

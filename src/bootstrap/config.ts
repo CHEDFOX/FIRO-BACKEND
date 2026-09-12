@@ -27,6 +27,16 @@ export const envSchema = z.object({
    */
   CORS_ORIGINS: z.string().default('*'),
 
+  // --- Database ---
+  // Unset means in-memory storage: the app still boots and every endpoint
+  // works, but nothing survives a restart. Tests rely on this.
+  DATABASE_URL: z.string().min(1).optional(),
+  DB_POOL_MAX: z.coerce.number().int().positive().max(100).default(10),
+  DB_AUTO_MIGRATE: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+
   // --- Auth / JWT ---
   // NOTE: HS256 with a shared secret for the foundation phase. The production
   // target (ADR-0007 in platform docs) is asymmetric EdDSA with a published

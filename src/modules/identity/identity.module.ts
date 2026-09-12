@@ -14,8 +14,11 @@ import { Sha256RefreshTokenCodec } from './infrastructure/crypto/sha256-refresh-
 import { AuthController } from './infrastructure/http/auth.controller';
 import { JwtAuthGuard } from './infrastructure/http/jwt-auth.guard';
 import { RolesGuard } from './infrastructure/http/roles.guard';
+import { repositoryProvider } from '../../infrastructure/database/repository-provider';
 import { InMemoryRefreshTokenRepository } from './infrastructure/persistence/in-memory-refresh-token.repository';
 import { InMemoryUserRepository } from './infrastructure/persistence/in-memory-user.repository';
+import { PostgresRefreshTokenRepository } from './infrastructure/persistence/postgres-refresh-token.repository';
+import { PostgresUserRepository } from './infrastructure/persistence/postgres-user.repository';
 import { JoseTokenIssuer } from './infrastructure/tokens/jose-token-issuer';
 
 /**
@@ -30,9 +33,18 @@ import { JoseTokenIssuer } from './infrastructure/tokens/jose-token-issuer';
 @Module({
   controllers: [AuthController],
   providers: [
-    // Ports -> adapters (swap for Postgres later)
-    { provide: USER_REPOSITORY, useClass: InMemoryUserRepository },
-    { provide: REFRESH_TOKEN_REPOSITORY, useClass: InMemoryRefreshTokenRepository },
+    // Both adapters are constructed; the provider below picks one at startup
+    // depending on whether DATABASE_URL is configured.
+    InMemoryUserRepository,
+    InMemoryRefreshTokenRepository,
+    PostgresUserRepository,
+    PostgresRefreshTokenRepository,
+    repositoryProvider(USER_REPOSITORY, PostgresUserRepository, InMemoryUserRepository),
+    repositoryProvider(
+      REFRESH_TOKEN_REPOSITORY,
+      PostgresRefreshTokenRepository,
+      InMemoryRefreshTokenRepository,
+    ),
     { provide: PASSWORD_HASHER, useClass: ScryptPasswordHasher },
     { provide: REFRESH_TOKEN_CODEC, useClass: Sha256RefreshTokenCodec },
     { provide: TOKEN_ISSUER, useClass: JoseTokenIssuer },

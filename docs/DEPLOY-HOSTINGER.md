@@ -3,11 +3,10 @@
 Step-by-step for a fresh Ubuntu VPS. Assumes you have the VPS IP and root SSH
 access from the Hostinger panel.
 
-> **Before you start — read this.** All data is still in memory. Every restart
-> or redeploy wipes every account, save and taste profile, and you must run
-> **exactly one instance**. That is fine for testing the flow and developing the
-> app against a real URL; it is not fine for real users. Postgres is the next
-> backend task.
+> **Use `docker compose`, not a bare `docker run`.** The stack is now an API
+> *plus* a PostgreSQL database, and compose wires them together with a
+> persistent volume so data survives restarts and redeploys. See
+> [§5a](#5a-running-with-postgres-recommended).
 
 ---
 
@@ -97,7 +96,72 @@ web origin before anyone else uses it.
 
 ---
 
-## 5. Build and run
+## 5a. Running with Postgres (recommended)
+
+Add the database settings to `.env`:
+
+```bash
+cat >> ~/firo-backend/.env <<'EOF'
+POSTGRES_USER=firo
+POSTGRES_PASSWORD=PASTE_A_LONG_RANDOM_PASSWORD
+POSTGRES_DB=firo
+EOF
+```
+
+Generate that password the same way as the JWT secret:
+
+```bash
+openssl rand -base64 32 | tr -d '\n='
+```
+
+Start both containers, then load the catalogue:
+
+```bash
+cd ~/firo-backend
+docker compose up -d --build
+docker compose exec api node dist/infrastructure/database/seed.js
+```
+
+Check it:
+
+```bash
+docker compose ps
+docker compose logs api --tail 20      # expect "connected to PostgreSQL"
+curl -s http://127.0.0.1:3000/health
+curl -s "http://127.0.0.1:3000/v1/experiences?limit=2"
+```
+
+The API applies any pending migrations automatically at startup, so a redeploy
+needs no manual schema step. **Seeding is only needed once** (and again after
+you edit the catalogue — it upserts, so re-running is safe).
+
+### Redeploying
+
+```bash
+cd ~/firo-backend && git pull
+docker compose up -d --build
+```
+
+Data is kept in the `firo-db-data` volume and survives this.
+
+> `docker compose down -v` **deletes that volume and every account, save and
+> taste profile with it.** Plain `docker compose down` is safe.
+
+### Backups
+
+Now that there is a database, set up the backup system —
+see [BACKUPS.md](BACKUPS.md):
+
+```bash
+sudo ./scripts/backup-setup.sh
+```
+
+---
+
+## 5. Build and run (API only, no database)
+
+> Only for a quick smoke test. Without `DATABASE_URL` the API stores everything
+> in memory and loses it on restart, and you must run exactly one instance.
 
 ```bash
 cd ~/firo-backend
