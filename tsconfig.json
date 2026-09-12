@@ -4,6 +4,10 @@
     "target": "ES2022",
     "lib": ["ES2022"],
     "moduleResolution": "node",
+    // TS 7 removes node10 resolution. Migrating to node16/nodenext also forces
+    // `import type` on every type used in a decorated signature (TS1272), which
+    // touches ~15 files across the DI layer — a deliberate, separate task.
+    "ignoreDeprecations": "5.0",
     "declaration": false,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -13,11 +17,9 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,

@@ -20,6 +20,13 @@ export const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   API_BASE_URL: z.string().url().default('http://localhost:3000'),
 
+  /**
+   * Comma-separated list of browser origins allowed to call the API, or "*"
+   * for any. Browsers block cross-origin calls without this, so any web client
+   * needs its origin listed. Keep it explicit in production.
+   */
+  CORS_ORIGINS: z.string().default('*'),
+
   // --- Auth / JWT ---
   // NOTE: HS256 with a shared secret for the foundation phase. The production
   // target (ADR-0007 in platform docs) is asymmetric EdDSA with a published
@@ -41,6 +48,19 @@ export interface AppConfig extends Env {
   readonly serviceName: string;
   readonly serviceVersion: string;
   readonly isProduction: boolean;
+  /** Parsed CORS_ORIGINS: either "*" or an explicit list of origins. */
+  readonly corsOrigins: '*' | string[];
+}
+
+function parseCorsOrigins(raw: string): '*' | string[] {
+  const trimmed = raw.trim();
+  if (trimmed === '*' || trimmed === '') {
+    return '*';
+  }
+  return trimmed
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
 }
 
 export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -56,5 +76,6 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     serviceName: SERVICE_NAME,
     serviceVersion: SERVICE_VERSION,
     isProduction: parsed.data.NODE_ENV === 'production',
+    corsOrigins: parseCorsOrigins(parsed.data.CORS_ORIGINS),
   };
 }

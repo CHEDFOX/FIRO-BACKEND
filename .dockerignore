@@ -1,0 +1,16 @@
+node_modules
+dist
+coverage
+.git
+.github
+docs
+test
+*.spec.ts
+.env
+.env.*
+!.env.example
+*.log
+.nx
+.cache
+tmp
+tsconfig.tsbuildinfo

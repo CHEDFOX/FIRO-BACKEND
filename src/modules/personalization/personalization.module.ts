@@ -5,10 +5,12 @@ import { IdentityModule } from '../identity/identity.module';
 import { BuildFeedUseCase } from './application/build-feed.usecase';
 import { GetDnaUseCase } from './application/get-dna.usecase';
 import { RecordSignalUseCase } from './application/record-signal.usecase';
+import { SubmitOnboardingUseCase } from './application/submit-onboarding.usecase';
 import { DNA_REPOSITORY } from './domain/dna.repository';
 import { HeuristicScorer, SCORER } from './domain/scorer';
 import { SESSION_INTENT_REPOSITORY } from './domain/session-intent';
 import { SIGNAL_REPOSITORY } from './domain/signal';
+import { OnboardingController } from './infrastructure/http/onboarding.controller';
 import { PersonalizationController } from './infrastructure/http/personalization.controller';
 import {
   InMemoryDnaRepository,
@@ -24,7 +26,7 @@ import {
  */
 @Module({
   imports: [IdentityModule, CatalogModule, DiscoveryModule],
-  controllers: [PersonalizationController],
+  controllers: [PersonalizationController, OnboardingController],
   providers: [
     { provide: DNA_REPOSITORY, useClass: InMemoryDnaRepository },
     { provide: SIGNAL_REPOSITORY, useClass: InMemorySignalRepository },
@@ -33,6 +35,7 @@ import {
     RecordSignalUseCase,
     BuildFeedUseCase,
     GetDnaUseCase,
+    SubmitOnboardingUseCase,
   ],
   exports: [GetDnaUseCase, DNA_REPOSITORY],
 })

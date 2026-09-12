@@ -2,6 +2,7 @@ import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from '../app.module';
+import { APP_CONFIG, type AppConfig } from './config';
 
 /**
  * Builds and configures the Nest (Fastify) application without starting the
@@ -19,6 +20,17 @@ export async function buildApp(): Promise<NestFastifyApplication> {
 
   app.setGlobalPrefix('v1', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
+  });
+
+  // Browsers block cross-origin API calls unless the server opts in, so any
+  // web client needs its origin allowed here.
+  const config = app.get<AppConfig>(APP_CONFIG);
+  app.enableCors({
+    origin: config.corsOrigins,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+    credentials: false,
+    maxAge: 86_400,
   });
 
   app.enableShutdownHooks();
