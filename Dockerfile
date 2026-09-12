@@ -4,7 +4,10 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
-# pnpm via corepack (version pinned by packageManager/lockfile).
+# Corepack installs the exact pnpm named in package.json's "packageManager".
+# Without that pin it fetches whatever is newest, which is how a build that
+# passes locally fails here. The prompt must be disabled for non-interactive use.
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
 # Install dependencies first so this layer caches across source changes.

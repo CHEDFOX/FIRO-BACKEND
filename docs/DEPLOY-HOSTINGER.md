@@ -219,6 +219,7 @@ curl -fsS "$BASE/v1/feed?limit=3" -H "authorization: Bearer $TOKEN"
 
 | Symptom | Cause / fix |
 |---|---|
+| Build fails: `ERR_PNPM_IGNORED_BUILDS` | Fixed. `package.json` now pins `"packageManager": "pnpm@10.33.0"`, so corepack installs the tested version instead of the newest. pnpm 12 treats a skipped install script as a fatal error; pnpm 10 does not. If you ever hit it again on a newer pnpm, add `dangerouslyAllowAllBuilds: true` to `pnpm-workspace.yaml` — but understand it lets *every* dependency run install scripts, so prefer keeping the pin. |
 | Container exits instantly | `docker logs firo-api` — almost always a bad/missing `JWT_SECRET` (min 16 chars). Config is validated at startup and fails loudly on purpose. |
 | 502 from nginx | Container not running, or not bound to `127.0.0.1:3000`. Check `docker ps`. |
 | CORS errors in the browser | `CORS_ORIGINS` must include your web origin exactly, scheme included. |
