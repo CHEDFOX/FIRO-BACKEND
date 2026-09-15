@@ -47,6 +47,6 @@ import {
     UnsaveExperienceUseCase,
     ListSavedUseCase,
   ],
-  exports: [ListSavedUseCase, COLLECTION_ITEM_REPOSITORY],
+  exports: [ListSavedUseCase, COLLECTION_ITEM_REPOSITORY, InMemoryCollectionItemRepository],
 })
 export class DiscoveryModule {}

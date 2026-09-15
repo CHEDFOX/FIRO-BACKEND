@@ -147,6 +147,34 @@ Data is kept in the `firo-db-data` volume and survives this.
 > `docker compose down -v` **deletes that volume and every account, save and
 > taste profile with it.** Plain `docker compose down` is safe.
 
+### Getting into the admin console
+
+The console needs an account with the `admin` role, and there is no way to grant
+it over HTTP. Either set it before you register:
+
+```bash
+echo 'ADMIN_EMAILS=you@yourdomain.com' >> ~/firo-backend/.env
+docker compose up -d      # picks up the new variable
+# now register that email through the API or the web client
+```
+
+…or promote an account that already exists:
+
+```bash
+docker compose exec api node dist/infrastructure/database/grant-admin.js you@yourdomain.com
+```
+
+Then run the console **on your own machine**, pointed at this server — it is a
+static folder in the frontend repo and should not be deployed publicly:
+
+```bash
+cd firo-frontend/admin && python3 -m http.server 4111
+```
+
+Full details in [ADMIN-CONSOLE.md](ADMIN-CONSOLE.md).
+
+---
+
 ### Backups
 
 Now that there is a database, set up the backup system —
@@ -288,7 +316,8 @@ curl -fsS "$BASE/v1/feed?limit=3" -H "authorization: Bearer $TOKEN"
 | 502 from nginx | Container not running, or not bound to `127.0.0.1:3000`. Check `docker ps`. |
 | CORS errors in the browser | `CORS_ORIGINS` must include your web origin exactly, scheme included. |
 | Users randomly logged out | More than one container running. In-memory state is per-instance — run exactly one. |
-| Everything reset | Expected: a restart clears memory. This is the reason to add Postgres next. |
+| Everything reset | You are running without `DATABASE_URL` (§5, not §5a). Switch to `docker compose`. |
+| `403 auth.insufficient_role` on the console | The account has no `admin` role, or its token predates the promotion — sign out and in again (tokens last 15 minutes). |
 | `docker: permission denied` | You skipped `newgrp docker` / re-login after `usermod -aG docker`. |
 
 ## Handy commands

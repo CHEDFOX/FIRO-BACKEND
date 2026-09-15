@@ -3,6 +3,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import request from 'supertest';
 import { buildApp } from '../src/bootstrap/app.factory';
 import { Database } from '../src/infrastructure/database/database';
+import { migrateDatabase, seedCatalog } from '../src/infrastructure/database/seed';
 
 /**
  * Exercises the real Postgres adapters.
@@ -35,12 +36,17 @@ describeIfDb('Postgres persistence (e2e)', () => {
     process.env['DATABASE_URL'] = CONNECTION;
     process.env['JWT_SECRET'] ??= 'postgres-test-secret-long-enough';
 
+    db = new Database({ connectionString: CONNECTION as string });
+    // Self-seeding: these tests assert on the curated catalogue, and depending
+    // on someone having run `pnpm seed` first makes a missing prerequisite look
+    // like a broken query.
+    await migrateDatabase(db);
+    await seedCatalog(db);
+
     app = await buildApp();
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
     server = app.getHttpServer() as Server;
-
-    db = new Database({ connectionString: CONNECTION as string });
   }, 30_000);
 
   afterAll(async () => {

@@ -4,11 +4,14 @@ import { BrowseExperiencesUseCase } from './application/browse-experiences.useca
 import { GetExperienceUseCase } from './application/get-experience.usecase';
 import { MapViewUseCase } from './application/map-view.usecase';
 import { CATALOG_REPOSITORY } from './domain/catalog.repository';
+import { CATALOG_WRITER } from './domain/catalog-writer';
 import { CatalogController } from './infrastructure/http/catalog.controller';
 import { MapController } from './infrastructure/http/map.controller';
 import { repositoryProvider } from '../../infrastructure/database/repository-provider';
 import { InMemoryCatalogRepository } from './infrastructure/persistence/in-memory-catalog.repository';
+import { InMemoryCatalogWriter } from './infrastructure/persistence/in-memory-catalog-writer.repository';
 import { PostgresCatalogRepository } from './infrastructure/persistence/postgres-catalog.repository';
+import { PostgresCatalogWriter } from './infrastructure/persistence/postgres-catalog-writer.repository';
 
 /**
  * Catalog bounded context: the geo hierarchy (country > region > place), the
@@ -28,11 +31,14 @@ import { PostgresCatalogRepository } from './infrastructure/persistence/postgres
     InMemoryCatalogRepository,
     PostgresCatalogRepository,
     repositoryProvider(CATALOG_REPOSITORY, PostgresCatalogRepository, InMemoryCatalogRepository),
+    InMemoryCatalogWriter,
+    PostgresCatalogWriter,
+    repositoryProvider(CATALOG_WRITER, PostgresCatalogWriter, InMemoryCatalogWriter),
     BrowseExperiencesUseCase,
     GetExperienceUseCase,
     MapViewUseCase,
   ],
-  exports: [CATALOG_REPOSITORY, MapViewUseCase],
+  exports: [CATALOG_REPOSITORY, CATALOG_WRITER, MapViewUseCase, InMemoryCatalogRepository],
 })
 export class CatalogModule {}
 

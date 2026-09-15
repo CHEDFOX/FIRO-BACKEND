@@ -25,7 +25,9 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "seed": "node dist/infrastructure/database/seed.js",
-    "seed:dev": "ts-node src/infrastructure/database/seed.ts"
+    "seed:dev": "ts-node src/infrastructure/database/seed.ts",
+    "admin:grant": "node dist/infrastructure/database/grant-admin.js",
+    "admin:grant:dev": "ts-node src/infrastructure/database/grant-admin.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.4",

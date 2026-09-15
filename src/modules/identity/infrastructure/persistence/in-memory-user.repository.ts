@@ -39,6 +39,14 @@ export class InMemoryUserRepository implements UserRepository {
     this.byId.set(user.id, user);
   }
 
+  /**
+   * Beyond the port: an unfiltered scan for the admin read model. Not on
+   * UserRepository because no user-facing use case may enumerate accounts.
+   */
+  listAll(): User[] {
+    return [...this.byId.values()];
+  }
+
   /** Test helper. */
   clear(): void {
     this.byId.clear();

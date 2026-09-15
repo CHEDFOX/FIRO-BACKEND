@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { APP_CONFIG, type AppConfig } from '../../../bootstrap/config';
 import { AppError } from '../../../shared/errors/app-error';
 import { uuidv7 } from '../../../shared/ids';
 import { PASSWORD_HASHER, PasswordHasher } from '../domain/password-hasher';
@@ -23,6 +24,7 @@ export class RegisterUserUseCase {
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
     @Inject(PASSWORD_HASHER) private readonly hasher: PasswordHasher,
     private readonly sessions: SessionManager,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
   async execute(command: RegisterUserCommand): Promise<AuthResult> {
@@ -45,7 +47,7 @@ export class RegisterUserUseCase {
       passwordHash: await this.hasher.hash(command.password),
       displayName: command.displayName?.trim() || null,
       locale: command.locale?.trim() || 'en',
-      roles: [Role.USER],
+      roles: this.config.adminEmails.includes(email) ? [Role.USER, Role.ADMIN] : [Role.USER],
       status: UserStatus.ACTIVE,
       createdAt: now,
       updatedAt: now,

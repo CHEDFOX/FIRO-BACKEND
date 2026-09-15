@@ -59,6 +59,6 @@ import { JoseTokenIssuer } from './infrastructure/tokens/jose-token-issuer';
     JwtAuthGuard,
     RolesGuard,
   ],
-  exports: [TOKEN_ISSUER, JwtAuthGuard, RolesGuard],
+  exports: [TOKEN_ISSUER, USER_REPOSITORY, JwtAuthGuard, RolesGuard, InMemoryUserRepository],
 })
 export class IdentityModule {}

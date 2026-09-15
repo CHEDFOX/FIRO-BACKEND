@@ -122,4 +122,39 @@ export class InMemoryCatalogRepository implements CatalogRepository {
   async listCountries(): Promise<Country[]> {
     return [...this.countries.values()].sort((a, b) => a.name.localeCompare(b.name));
   }
+
+  // --- Beyond the CatalogRepository port ------------------------------------
+  //
+  // These back the in-memory adapters for the catalog *writer* and the admin
+  // read model. They are not on the port because no public use case needs an
+  // unfiltered scan, and putting them there would invite one.
+
+  /** Every experience regardless of status, newest first. */
+  listAllExperiences(): Experience[] {
+    return [...this.experiences.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+
+  listAllPlaces(): Place[] {
+    return [...this.places.values()];
+  }
+
+  listAllRegions(): Region[] {
+    return [...this.regions.values()];
+  }
+
+  listAllCountries(): Country[] {
+    return [...this.countries.values()];
+  }
+
+  putExperience(experience: Experience): void {
+    this.experiences.set(experience.id, experience);
+  }
+
+  putPlace(place: Place): void {
+    this.places.set(place.id, place);
+  }
+
+  dropExperience(id: string): boolean {
+    return this.experiences.delete(id);
+  }
 }

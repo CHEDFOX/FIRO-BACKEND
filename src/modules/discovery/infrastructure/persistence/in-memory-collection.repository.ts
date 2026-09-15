@@ -110,4 +110,9 @@ export class InMemoryCollectionItemRepository implements CollectionItemRepositor
     }
     return saved;
   }
+
+  /** Beyond the port: every save from every user, for the admin read model. */
+  listAll(): CollectionItem[] {
+    return [...this.byId.values()];
+  }
 }

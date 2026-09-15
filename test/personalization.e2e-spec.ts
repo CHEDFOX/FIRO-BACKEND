@@ -38,10 +38,7 @@ describe('Personalization (e2e)', () => {
       .expect(202);
 
   const feed = (token: string, query = 'limit=10') =>
-    request(server)
-      .get(`/v1/feed?${query}`)
-      .set('Authorization', `Bearer ${token}`)
-      .expect(200);
+    request(server).get(`/v1/feed?${query}`).set('Authorization', `Bearer ${token}`).expect(200);
 
   it('requires authentication', async () => {
     await request(server).get('/v1/feed').expect(401);

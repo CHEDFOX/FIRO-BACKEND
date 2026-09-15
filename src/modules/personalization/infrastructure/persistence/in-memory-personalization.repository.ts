@@ -17,6 +17,11 @@ export class InMemoryDnaRepository implements DnaRepository {
     this.byUser.set(dna.userId, dna);
   }
 
+  /** Beyond the port: every profile, for the admin read model. */
+  listAll(): ExplorerDna[] {
+    return [...this.byUser.values()];
+  }
+
   /**
    * Average taste across everyone we know about, used to seed new profiles.
    * Withheld until a handful of profiles exist — an "average" drawn from two
@@ -64,6 +69,11 @@ export class InMemorySignalRepository implements SignalRepository {
 
   async countForUser(userId: string): Promise<number> {
     return (this.byUser.get(userId) ?? []).length;
+  }
+
+  /** Beyond the port: every signal from every user, for the admin read model. */
+  listAll(): Signal[] {
+    return [...this.byUser.values()].flat();
   }
 }
 

@@ -50,6 +50,17 @@ export const envSchema = z.object({
     .int()
     .positive()
     .default(60 * 60 * 24 * 30), // 30d
+
+  // --- Admin console ---
+  /**
+   * Comma-separated emails that receive the admin role when they register.
+   *
+   * This is a bootstrap, not an access-control system: it only applies at sign
+   * up, so it cannot promote an existing account, and the list must contain
+   * addresses you already control. Everything after the first admin is done
+   * from the console itself (audited), or with `pnpm admin:grant`.
+   */
+  ADMIN_EMAILS: z.string().default(''),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -60,6 +71,8 @@ export interface AppConfig extends Env {
   readonly isProduction: boolean;
   /** Parsed CORS_ORIGINS: either "*" or an explicit list of origins. */
   readonly corsOrigins: '*' | string[];
+  /** Parsed ADMIN_EMAILS, lowercased. Empty means "no bootstrap admin". */
+  readonly adminEmails: readonly string[];
 }
 
 function parseCorsOrigins(raw: string): '*' | string[] {
@@ -87,5 +100,13 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     serviceVersion: SERVICE_VERSION,
     isProduction: parsed.data.NODE_ENV === 'production',
     corsOrigins: parseCorsOrigins(parsed.data.CORS_ORIGINS),
+    adminEmails: parseAdminEmails(parsed.data.ADMIN_EMAILS),
   };
+}
+
+function parseAdminEmails(raw: string): string[] {
+  return raw
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter((email) => email.length > 0);
 }

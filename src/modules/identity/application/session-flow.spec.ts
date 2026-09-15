@@ -20,7 +20,7 @@ function wire() {
   const sessions = new SessionManager(users, refreshTokens, codec, issuer, config);
   return {
     issuer,
-    register: new RegisterUserUseCase(users, hasher, sessions),
+    register: new RegisterUserUseCase(users, hasher, sessions, config),
     login: new LoginUseCase(users, hasher, sessions),
     refresh: new RefreshSessionUseCase(sessions),
   };

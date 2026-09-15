@@ -46,6 +46,6 @@ import {
     GetDnaUseCase,
     SubmitOnboardingUseCase,
   ],
-  exports: [GetDnaUseCase, DNA_REPOSITORY],
+  exports: [GetDnaUseCase, DNA_REPOSITORY, InMemoryDnaRepository, InMemorySignalRepository],
 })
 export class PersonalizationModule {}

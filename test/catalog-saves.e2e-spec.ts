@@ -154,8 +154,7 @@ describe('Catalog, Map & Saves (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
       const matching = list.body.data.filter(
-        (entry: { experience: { id: string } }) =>
-          entry.experience.id === 'exp_lofoten_blue_hour',
+        (entry: { experience: { id: string } }) => entry.experience.id === 'exp_lofoten_blue_hour',
       );
       expect(matching).toHaveLength(1);
     });
