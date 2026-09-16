@@ -139,17 +139,23 @@ export const SEED_PLACES: readonly Place[] = [
   },
 ];
 
-function media(id: string, color: string): Experience['media'] {
-  return [
-    {
-      id,
-      url: `https://media.firo.app/seed/${id}.jpg`,
-      dominantColor: color,
-      width: 2400,
-      height: 3000,
-      attribution: null,
-    },
-  ];
+/**
+ * Seeded experiences ship with NO media.
+ *
+ * They used to carry `https://media.firo.app/seed/<id>.jpg`, which was
+ * harmless only for as long as no client actually requested it. The moment the
+ * feed started rendering real <img> tags, every seeded card became a failed
+ * network request — a placeholder that pretends to be a photograph is worse
+ * than an honest absence.
+ *
+ * Real photographs are uploaded through the console (POST /v1/admin/media),
+ * which is also the only way to get the dominant colour and the variant ladder
+ * that the cards want. Until then a card renders a colour derived from its id,
+ * so the catalogue looks like content awaiting photographs rather than content
+ * that is broken.
+ */
+function media(): Experience['media'] {
+  return [];
 }
 
 export const SEED_EXPERIENCES: readonly Experience[] = [
@@ -170,7 +176,7 @@ export const SEED_EXPERIENCES: readonly Experience[] = [
     difficulty: 2,
     wowScore: 0.94,
     hiddenGemScore: 0.45,
-    media: media('lofoten_blue_hour', '#1B2A3A'),
+    media: media(),
     status: ExperienceStatus.PUBLISHED,
     createdAt: TS,
     updatedAt: TS,
@@ -189,7 +195,7 @@ export const SEED_EXPERIENCES: readonly Experience[] = [
     difficulty: 1,
     wowScore: 0.88,
     hiddenGemScore: 0.3,
-    media: media('hamnoy_bridge_dawn', '#24384B'),
+    media: media(),
     status: ExperienceStatus.PUBLISHED,
     createdAt: TS,
     updatedAt: TS,
@@ -211,7 +217,7 @@ export const SEED_EXPERIENCES: readonly Experience[] = [
     difficulty: 2,
     wowScore: 0.91,
     hiddenGemScore: 0.55,
-    media: media('vestrahorn_black_sand', '#12181F'),
+    media: media(),
     status: ExperienceStatus.PUBLISHED,
     createdAt: TS,
     updatedAt: TS,
@@ -230,7 +236,7 @@ export const SEED_EXPERIENCES: readonly Experience[] = [
     difficulty: 1,
     wowScore: 0.82,
     hiddenGemScore: 0.2,
-    media: media('arashiyama_bamboo_dawn', '#2C3B2A'),
+    media: media(),
     status: ExperienceStatus.PUBLISHED,
     createdAt: TS,
     updatedAt: TS,
@@ -249,7 +255,7 @@ export const SEED_EXPERIENCES: readonly Experience[] = [
     difficulty: 1,
     wowScore: 0.79,
     hiddenGemScore: 0.25,
-    media: media('gion_lantern_night', '#3B2418'),
+    media: media(),
     status: ExperienceStatus.PUBLISHED,
     createdAt: TS,
     updatedAt: TS,
@@ -271,7 +277,7 @@ export const SEED_EXPERIENCES: readonly Experience[] = [
     difficulty: 3,
     wowScore: 0.9,
     hiddenGemScore: 0.28,
-    media: media('tre_cime_circuit', '#4A4E55'),
+    media: media(),
     status: ExperienceStatus.PUBLISHED,
     createdAt: TS,
     updatedAt: TS,
@@ -290,7 +296,7 @@ export const SEED_EXPERIENCES: readonly Experience[] = [
     difficulty: 3,
     wowScore: 0.87,
     hiddenGemScore: 0.62,
-    media: media('erg_chebbi_silence', '#C08A4E'),
+    media: media(),
     status: ExperienceStatus.PUBLISHED,
     createdAt: TS,
     updatedAt: TS,
@@ -309,7 +315,7 @@ export const SEED_EXPERIENCES: readonly Experience[] = [
     difficulty: 2,
     wowScore: 0.81,
     hiddenGemScore: 0.35,
-    media: media('benagil_sea_cave', '#D2A15E'),
+    media: media(),
     status: ExperienceStatus.PUBLISHED,
     createdAt: TS,
     updatedAt: TS,
@@ -328,7 +334,7 @@ export const SEED_EXPERIENCES: readonly Experience[] = [
     difficulty: 3,
     wowScore: 0.95,
     hiddenGemScore: 0.15,
-    media: media('machu_picchu_first_light', '#3F5540'),
+    media: media(),
     status: ExperienceStatus.PUBLISHED,
     createdAt: TS,
     updatedAt: TS,
@@ -347,7 +353,7 @@ export const SEED_EXPERIENCES: readonly Experience[] = [
     difficulty: 4,
     wowScore: 0.89,
     hiddenGemScore: 0.4,
-    media: media('wanaka_roys_peak', '#5B6E7A'),
+    media: media(),
     status: ExperienceStatus.PUBLISHED,
     createdAt: TS,
     updatedAt: TS,

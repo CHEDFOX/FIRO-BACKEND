@@ -6,6 +6,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { DiscoveryModule } from './modules/discovery/discovery.module';
 import { IdentityModule } from './modules/identity/identity.module';
+import { MediaModule } from './modules/media/media.module';
 import { PersonalizationModule } from './modules/personalization/personalization.module';
 import { HealthModule } from './platform/health/health.module';
 import { MetaModule } from './platform/meta/meta.module';
@@ -32,6 +33,7 @@ import { ResponseEnvelopeInterceptor } from './shared/http/response-envelope.int
     CatalogModule,
     DiscoveryModule,
     PersonalizationModule,
+    MediaModule,
     // operator console — reads across every context, so it is imported last
     AdminModule,
     // added in later phases:

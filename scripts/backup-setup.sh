@@ -65,6 +65,14 @@ BACKUP_REMOTE=
 KEEP_DAILY=7
 KEEP_WEEKLY=4
 KEEP_MONTHLY=6
+
+# Uploaded images. NOT included in the encrypted dump above — they are synced
+# incrementally to \$BACKUP_REMOTE/media, because they are large, immutable and
+# already public. Leave empty if the API stores no uploads.
+#
+# With docker compose the volume is on the host at:
+#   /var/lib/docker/volumes/firo-media-data/_data
+MEDIA_DIR=/var/lib/docker/volumes/firo-media-data/_data
 EOF
   chmod 600 "$CONFIG_FILE"
 else

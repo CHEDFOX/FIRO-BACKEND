@@ -65,13 +65,31 @@ All under `/v1/admin`, all requiring a bearer token for an account with the
 | PUT | `/content/:id` | Edit an experience |
 | DELETE | `/content/:id` | Hard-delete an experience |
 | GET | `/places` | Places, for the editor's picker |
+| POST | `/media` | Upload one image (multipart, field `file`) |
+| GET | `/media` | The image library |
+| GET | `/media/:id` | One asset with its variants |
+| DELETE | `/media/:id` | Delete an image (refused while a card uses it) |
 | GET | `/map` | Every experience with coordinates, status and save count |
 | GET | `/activity` | Recent signups, saves and signals (`since`, `limit`) |
 | GET | `/stream` | The same as Server-Sent Events, live |
 | GET | `/audit` | Every change made from the console |
 
-Responses use the standard `{ data, meta, error }` envelope. `/stream` does not
-— it is SSE, and is marked `@RawResponse()` for that reason.
+Responses use the standard `{ data, meta, error }` envelope. Two do not:
+`/stream` is SSE, and `GET /media/<path>` (note: **no** `/v1`, and outside the
+admin namespace) returns image bytes. Both are marked `@RawResponse()`.
+
+### Images
+
+`POST /v1/admin/media` takes `multipart/form-data` with a `file` field and
+optional `alt` and `attribution` fields. It returns a ready-made `media` object
+to drop straight into an experience's `media` array — including every generated
+width, so the client can build a `srcset`.
+
+The format is decided by the **bytes**, never the filename or the declared
+content type, both of which the uploader controls. SVG is refused outright: it
+is a document that can carry script, and serving user-supplied SVG from the
+API's own origin is a cross-site scripting hole rather than an image feature.
+See [ADR-0011](adr/0011-images-on-the-vps.md) for the storage design.
 
 ### The live stream
 

@@ -1,3 +1,4 @@
+import multipart from '@fastify/multipart';
 import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -19,12 +20,29 @@ export async function buildApp(): Promise<NestFastifyApplication> {
   });
 
   app.setGlobalPrefix('v1', {
-    exclude: [{ path: 'health', method: RequestMethod.GET }],
+    exclude: [
+      { path: 'health', method: RequestMethod.GET },
+      // Images are static assets served at the same path nginx will serve them
+      // from. Versioning them would mean the URL stored in the database
+      // changes the day a reverse proxy goes in front.
+      { path: 'media/*', method: RequestMethod.GET },
+    ],
+  });
+
+  // Multipart, for admin image uploads. Registered here rather than per-module
+  // so the size limit is enforced by the parser — before a large body is in
+  // memory — instead of after.
+  const config = app.get<AppConfig>(APP_CONFIG);
+  await app.register(multipart, {
+    limits: {
+      fileSize: config.MEDIA_MAX_UPLOAD_BYTES,
+      files: 1,
+      fields: 8,
+    },
   });
 
   // Browsers block cross-origin API calls unless the server opts in, so any
   // web client needs its origin allowed here.
-  const config = app.get<AppConfig>(APP_CONFIG);
   app.enableCors({
     origin: config.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

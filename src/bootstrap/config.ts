@@ -61,6 +61,33 @@ export const envSchema = z.object({
    * from the console itself (audited), or with `pnpm admin:grant`.
    */
   ADMIN_EMAILS: z.string().default(''),
+
+  // --- Media ---
+  /** Where uploaded images live. In Docker this is a mounted volume. */
+  MEDIA_DIR: z.string().min(1).default('./var/media'),
+  /**
+   * Public prefix images are served from. Empty means "this API, at /media",
+   * which is the development default; in production nginx serves the same
+   * paths and this points at the real host (or a CDN in front of it).
+   */
+  MEDIA_BASE_URL: z.string().default(''),
+  /** Per-file upload cap. Every byte here is bandwidth on every view. */
+  MEDIA_MAX_UPLOAD_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(25 * 1024 * 1024), // 25 MB
+  /**
+   * Uploads stop below this much free disk.
+   *
+   * Images share a volume with Postgres on a single VPS, so a disk filled by a
+   * bulk upload is not a failed upload — it is a database that cannot write.
+   */
+  MEDIA_MIN_FREE_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(2 * 1024 * 1024 * 1024), // 2 GB
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -73,6 +100,8 @@ export interface AppConfig extends Env {
   readonly corsOrigins: '*' | string[];
   /** Parsed ADMIN_EMAILS, lowercased. Empty means "no bootstrap admin". */
   readonly adminEmails: readonly string[];
+  /** MEDIA_BASE_URL, or this API's own /media route when unset. */
+  readonly mediaBaseUrl: string;
 }
 
 function parseCorsOrigins(raw: string): '*' | string[] {
@@ -101,6 +130,9 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     isProduction: parsed.data.NODE_ENV === 'production',
     corsOrigins: parseCorsOrigins(parsed.data.CORS_ORIGINS),
     adminEmails: parseAdminEmails(parsed.data.ADMIN_EMAILS),
+    mediaBaseUrl:
+      parsed.data.MEDIA_BASE_URL.trim().replace(/\/+$/, '') ||
+      `${parsed.data.API_BASE_URL.replace(/\/+$/, '')}/media`,
   };
 }
 

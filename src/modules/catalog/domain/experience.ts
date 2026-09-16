@@ -11,12 +11,24 @@ export type ExperienceStatus = (typeof ExperienceStatus)[keyof typeof Experience
 
 export interface MediaRef {
   readonly id: string;
+  /** The default width a single-URL consumer gets. */
   readonly url: string;
   /** Dominant colour (hex) so the client can show a tasteful placeholder while loading. */
   readonly dominantColor: string | null;
   readonly width: number | null;
   readonly height: number | null;
   readonly attribution: string | null;
+  /** What the photograph shows, for screen readers. */
+  readonly alt?: string | null;
+  /**
+   * Every generated width, so a client can build a `srcset` and let the browser
+   * choose.
+   *
+   * Optional because it arrived after the field did, and a card with only `url`
+   * must keep working. Without it a phone downloads the same file as a desktop,
+   * which is the single biggest waste of bandwidth an image-led feed can make.
+   */
+  readonly variants?: readonly { readonly width: number; readonly url: string }[];
 }
 
 /**

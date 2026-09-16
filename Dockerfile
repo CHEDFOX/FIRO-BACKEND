@@ -35,7 +35,22 @@ USER node
 
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
+COPY --from=build --chown=node:node /app/db ./db
 COPY --chown=node:node package.json ./
+
+# Where uploaded images live. Created here so the directory exists and is owned
+# by `node` even before compose mounts a volume over it — a root-owned mount
+# point is the difference between "uploads work" and "EACCES on first upload".
+RUN mkdir -p /app/var/media
+ENV MEDIA_DIR=/app/var/media
+
+# Fail the BUILD if sharp's native binary is wrong for this platform.
+#
+# This image is Alpine (musl) while development usually happens on glibc, and
+# sharp resolves a different prebuilt binary for each. A mismatch does not
+# surface at install time or at startup — it surfaces on the first upload, in
+# production. Encoding one 8x8 image here turns that into a build failure.
+RUN node -e "const sharp=require('sharp');   sharp({create:{width:8,height:8,channels:3,background:'#123456'}})     .webp().toBuffer()     .then(b=>console.log('sharp ok: libvips '+sharp.versions.vips+', '+b.length+' bytes'))     .catch(e=>{console.error('SHARP IS BROKEN IN THIS IMAGE:',e.message);process.exit(1)})"
 
 EXPOSE 3000
 

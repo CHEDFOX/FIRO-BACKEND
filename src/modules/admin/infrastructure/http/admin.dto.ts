@@ -45,6 +45,14 @@ const MediaSchema = z.object({
   width: z.number().int().positive().nullable().default(null),
   height: z.number().int().positive().nullable().default(null),
   attribution: z.string().max(200).nullable().default(null),
+  alt: z.string().max(300).nullable().default(null),
+  // The generated width ladder, so clients can pick a size. Carried through
+  // from the upload response rather than reconstructed, because only the media
+  // module knows which rungs were actually produced.
+  variants: z
+    .array(z.object({ width: z.number().int().positive(), url: z.string().url() }))
+    .max(8)
+    .optional(),
 });
 
 /**

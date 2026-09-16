@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 #
-# Nightly Postgres backup: dump -> compress -> encrypt -> store -> replicate -> prune.
+# Nightly backup.
+#
+#   database : dump -> compress -> encrypt -> store -> replicate -> prune
+#   images   : incremental sync to the same off-site remote
+#
+# The two are handled differently on purpose. The database is small, changes
+# everywhere at once, and must be restorable to an exact point in time, so it
+# gets a fresh encrypted dump each night. Uploaded images are large,
+# content-addressed and immutable — a file never changes once written — so a
+# nightly tarball would re-upload tens of gigabytes to capture a handful of new
+# photographs. They are synced instead, which after the first run costs only
+# what actually changed.
 #
 # Design notes:
 #  - Encrypts BEFORE anything leaves the machine. A dump holds emails, password
@@ -147,5 +158,42 @@ prune_tier() {
 prune_tier daily "$KEEP_DAILY"
 prune_tier weekly "$KEEP_WEEKLY"
 prune_tier monthly "$KEEP_MONTHLY"
+
+# --- images -------------------------------------------------------------------
+# Uploaded photographs are NOT in the dump above: they live on disk, and losing
+# them means the catalogue survives with every card blank. They are worth as
+# much as the database and are protected separately.
+#
+# Not encrypted, unlike the dump: these are public images already served to
+# anyone, and age-encrypting them would make the sync non-incremental (a new
+# ciphertext every night) for no privacy gained.
+if [[ -n "${MEDIA_DIR:-}" ]]; then
+  if [[ ! -d "$MEDIA_DIR" ]]; then
+    log "WARNING: MEDIA_DIR=${MEDIA_DIR} does not exist — no images were backed up"
+  elif [[ -z "${BACKUP_REMOTE:-}" ]]; then
+    log "WARNING: images not replicated — BACKUP_REMOTE is not set"
+  else
+    media_count=$(find "$MEDIA_DIR" -type f | wc -l | tr -d ' ')
+    media_size=$(du -sh "$MEDIA_DIR" 2>/dev/null | cut -f1)
+    log "syncing ${media_count} image file(s) (${media_size}) to ${BACKUP_REMOTE%/}/media"
+
+    # `copy`, never `sync`: sync mirrors deletions, so one bad local delete —
+    # or a volume that failed to mount and presented an empty directory —
+    # would propagate and wipe the off-site copy too. Content-addressed
+    # filenames mean copies never conflict, so nothing is ever overwritten and
+    # orphans cost only disk.
+    if rclone copy "$MEDIA_DIR" "${BACKUP_REMOTE%/}/media" \
+        --transfers 4 --checkers 8 --immutable --stats-one-line; then
+      log "images replicated off-site"
+    else
+      # A failure here does not fail the run: the database dump above already
+      # succeeded and is the part that cannot be recreated. Losing tonight's
+      # image sync is recoverable tomorrow.
+      log "WARNING: image sync to ${BACKUP_REMOTE} FAILED — the database backup is still good"
+    fi
+  fi
+else
+  log "MEDIA_DIR is not set — skipping images (set it if the API stores uploads)"
+fi
 
 log "OK ${TIER} backup complete"

@@ -45,6 +45,19 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
       API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      # Images. MEDIA_BASE_URL is the public prefix written into the database
+      # when a photo is attached, so it must be the URL a browser can reach —
+      # set it once, before uploading anything, and do not change it after.
+      MEDIA_DIR: /app/var/media
+      MEDIA_BASE_URL: ${MEDIA_BASE_URL:-}
+      MEDIA_MAX_UPLOAD_BYTES: ${MEDIA_MAX_UPLOAD_BYTES:-26214400}
+      MEDIA_MIN_FREE_BYTES: ${MEDIA_MIN_FREE_BYTES:-2147483648}
+    volumes:
+      # Its own volume, separate from the database's. They share a physical
+      # disk on a single VPS, which is why the API refuses uploads below a
+      # free-space floor rather than letting images starve Postgres of room.
+      - firo-media-data:/app/var/media
     ports:
       - '${API_PORT:-3000}:3000'
 
@@ -53,3 +66,8 @@ volumes:
     # Named volume: `docker compose down` keeps it. Removing it (`down -v`)
     # destroys every account, save and taste profile.
     name: firo-db-data
+  firo-media-data:
+    # Every uploaded photograph. `down -v` destroys these too, and unlike the
+    # database they are not in the nightly dump — they are synced off-site
+    # separately (see scripts/backup.sh).
+    name: firo-media-data

@@ -184,6 +184,45 @@ see [BACKUPS.md](BACKUPS.md):
 sudo ./scripts/backup-setup.sh
 ```
 
+### Photographs
+
+Images are stored on this VPS and served by nginx (see
+[ADR-0011](adr/0011-images-on-the-vps.md)). Before uploading anything, set the
+public prefix — **it is written into the database when a photo is attached to a
+card, so changing it later breaks every existing image**:
+
+```bash
+cat >> ~/firo-backend/.env <<'EOF'
+MEDIA_BASE_URL=https://api.yourdomain.com/media
+EOF
+docker compose up -d
+```
+
+No domain yet? Leave it empty; the API then serves images itself at
+`http://YOUR_VPS_IP:3000/media/...`. Set it properly before you upload real
+content.
+
+Then upload through the console (Content → New experience → Photograph). The
+API resizes to 400/800/1600px WebP, samples the dominant colour for the
+loading placeholder, and refuses anything under 800×600 or below the free-disk
+floor.
+
+**Put Cloudflare in front.** The free plan caches these images at the edge
+worldwide, which is the one real thing object storage would have bought. Add
+the domain to Cloudflare, proxy the `api` record (orange cloud), and the
+immutable cache headers do the rest.
+
+```bash
+# Check nginx is serving images itself rather than proxying to Node:
+curl -sI https://api.yourdomain.com/media/  # 403 or 404 from nginx, not a JSON envelope
+# Disk use:
+docker system df -v | grep firo-media-data
+```
+
+> Images are **not** in the nightly database dump — they are synced separately
+> to the same off-site remote. `backup-setup.sh` writes `MEDIA_DIR` into
+> `/etc/firo-backup.env` for that. If you moved the volume, fix it there.
+
 ---
 
 ## 5. Build and run (API only, no database)
@@ -232,6 +271,26 @@ server {
     listen 80;
     server_name api.yourdomain.com;
 
+    # Admin image uploads. The API caps each file itself; nginx has to be told
+    # separately or it rejects the body with a 413 before the app ever sees it.
+    client_max_body_size 30m;
+
+    # Photographs, served straight off disk. Node never touches an image byte:
+    # nginx does this with a fraction of the memory and CPU.
+    #
+    # The paths are content-addressed, so the contents behind a URL can never
+    # change — which is what makes a one-year immutable cache honest rather
+    # than a bug waiting to happen.
+    location /media/ {
+        alias /var/lib/docker/volumes/firo-media-data/_data/;
+        access_log off;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header Access-Control-Allow-Origin "*";
+        # A missing file is a missing file — do not fall through to the API,
+        # which would put Node back in the path of every 404.
+        try_files $uri =404;
+    }
+
     location / {
         proxy_pass         http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -240,9 +299,15 @@ server {
         proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header   X-Forwarded-Proto $scheme;
         proxy_read_timeout 60s;
+        # The live admin stream is Server-Sent Events: buffering it would hold
+        # every event until the connection closed.
+        proxy_buffering    off;
     }
 }
 EOF
+
+# nginx runs as www-data and needs to traverse into the Docker volume.
+sudo chmod o+x /var/lib/docker /var/lib/docker/volumes
 
 sudo ln -sf /etc/nginx/sites-available/firo /etc/nginx/sites-enabled/firo
 sudo rm -f /etc/nginx/sites-enabled/default
@@ -318,6 +383,11 @@ curl -fsS "$BASE/v1/feed?limit=3" -H "authorization: Bearer $TOKEN"
 | Users randomly logged out | More than one container running. In-memory state is per-instance — run exactly one. |
 | Everything reset | You are running without `DATABASE_URL` (§5, not §5a). Switch to `docker compose`. |
 | `403 auth.insufficient_role` on the console | The account has no `admin` role, or its token predates the promotion — sign out and in again (tokens last 15 minutes). |
+| `413` when uploading an image | nginx's `client_max_body_size`, not the API. Raise it in the server block and reload. |
+| Images 404 through nginx but work on `:3000` | nginx cannot traverse into the Docker volume: `sudo chmod o+x /var/lib/docker /var/lib/docker/volumes`. Check the `alias` path matches `docker volume inspect firo-media-data`. |
+| `media.disk_full` on upload | Genuinely low disk. Uploads stop before Postgres runs out of room — that is deliberate. Free space, or lower `MEDIA_MIN_FREE_BYTES` knowing what it protects. |
+| Uploads work, images break after a domain change | `MEDIA_BASE_URL` is baked into stored URLs. Fix the old rows in `catalog.experiences.media`, or keep the old host answering. |
+| Build fails on `SHARP IS BROKEN IN THIS IMAGE` | The image check did its job: sharp's binary does not match the platform. Rebuild without cache (`docker compose build --no-cache api`); the Alpine (musl) binaries must be in `pnpm-lock.yaml`. |
 | `docker: permission denied` | You skipped `newgrp docker` / re-login after `usermod -aG docker`. |
 
 ## Handy commands
