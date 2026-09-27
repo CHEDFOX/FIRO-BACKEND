@@ -77,7 +77,8 @@ export const ONBOARDING_FLOW: OnboardingFlow = {
       id: 'pull',
       type: OnboardingStepType.MULTI_SELECT,
       title: 'What pulls you toward a place?',
-      subtitle: 'Pick a few. Firo learns the rest.',
+      subtitle:
+        "Pick a few, and don't think too hard. The ones your eye went to first are usually the honest ones.",
       minSelect: 1,
       options: [
         option(
@@ -122,7 +123,7 @@ export const ONBOARDING_FLOW: OnboardingFlow = {
       id: 'pace',
       type: OnboardingStepType.EITHER_OR,
       title: 'Which evening sounds better?',
-      subtitle: null,
+      subtitle: "There's no wrong answer. There is a telling one.",
       minSelect: 1,
       options: [
         option(
@@ -145,7 +146,7 @@ export const ONBOARDING_FLOW: OnboardingFlow = {
       id: 'effort',
       type: OnboardingStepType.EITHER_OR,
       title: 'How do you want to arrive?',
-      subtitle: null,
+      subtitle: 'This one says more about you than it seems to.',
       minSelect: 1,
       options: [
         option(
@@ -162,7 +163,7 @@ export const ONBOARDING_FLOW: OnboardingFlow = {
       id: 'looking',
       type: OnboardingStepType.MULTI_SELECT,
       title: 'And what are you hoping to bring home?',
-      subtitle: null,
+      subtitle: "Last one. Then we'll show you what your answers say about you.",
       minSelect: 1,
       options: [
         option('photos', 'Photographs', [Tag.PHOTOGRAPHY], '#24384B', 'exp_hamnoy_bridge_dawn'),

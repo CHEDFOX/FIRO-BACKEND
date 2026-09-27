@@ -1,4 +1,4 @@
-import { Tag } from '../../catalog/domain/taxonomy';
+import { monthsInSeason, Tag } from '../../catalog/domain/taxonomy';
 import { type ExplorerDna, tagScore } from './explorer-dna';
 import type { ScoredExperience } from './scorer';
 
@@ -175,6 +175,103 @@ export function greetingFor(tags: readonly Tag[]): string {
   return phrase ? `Somewhere ${phrase}, today.` : 'Somewhere new, today.';
 }
 
+export interface ClueInput {
+  readonly lat: number;
+  /** The place's IANA time zone, when the catalogue knows it. */
+  readonly timeZone: string | null;
+  readonly elevationMeters: number | null;
+  readonly seasonMask: number;
+  readonly now: Date;
+}
+
+/** What the hour feels like there, without claiming weather we do not know. */
+function hourAtPlace(hour: number): string {
+  if (hour >= 5 && hour < 8) return 'The day is only just beginning.';
+  if (hour >= 8 && hour < 12) return 'The morning is still young.';
+  if (hour >= 12 && hour < 17) return 'The afternoon is still long.';
+  if (hour >= 17 && hour < 21) return 'The day is starting to fade.';
+  if (hour >= 21) return 'The evening is settling in.';
+  return 'Almost everyone is asleep.';
+}
+
+/**
+ * Clues, revealed one at a time on the Arrive screen before the place itself.
+ *
+ *   "It's 06:40 there. The day is only just beginning."
+ *   "It lies 64° north, further north than most people ever travel."
+ *   "And this is one of the best months to be there."
+ *
+ * This is the curiosity gap on purpose: enough to picture something, not
+ * enough to know it, so the tap that follows is a small act of wanting to
+ * know. Every clue is a fact computed from the place, never a flourish: no
+ * weather, no crowds, no claim the data cannot back.
+ */
+export function cluesFor(input: ClueInput): string[] {
+  const clues: string[] = [];
+
+  if (input.timeZone && isValidTimeZone(input.timeZone)) {
+    const clock = new Intl.DateTimeFormat('en-GB', {
+      timeZone: input.timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).format(input.now);
+    clues.push(
+      `It's ${clock} there right now. ${hourAtPlace(localHour(input.now, input.timeZone))}`,
+    );
+  }
+
+  const lat = Math.round(Math.abs(input.lat));
+  if (input.elevationMeters !== null && input.elevationMeters >= 1500) {
+    const metres = Math.round(input.elevationMeters / 100) * 100;
+    clues.push(
+      `It sits ${metres.toLocaleString('en-GB')} metres up, where the air is noticeably thinner.`,
+    );
+  } else if (input.lat >= 60) {
+    clues.push(`It lies ${lat}° north, further north than most people ever travel.`);
+  } else if (input.lat <= -46) {
+    clues.push(`It lies ${lat}° south, closer to Antarctica than to the equator.`);
+  } else if (Math.abs(input.lat) < 23.5) {
+    clues.push("It's inside the tropics, where the midday sun stands almost straight overhead.");
+  } else if (input.lat < 0) {
+    clues.push("It's south of the equator, where the seasons run the other way round.");
+  }
+
+  const months = monthsInSeason(input.seasonMask);
+  if (months.length > 0 && months.length < 12) {
+    const month = input.now.getUTCMonth() + 1;
+    clues.push(
+      months.includes(month)
+        ? 'And this is one of the best months to be there.'
+        : "It's out of season there now: the version of it few people ever see.",
+    );
+  }
+
+  return clues.slice(0, 3);
+}
+
+/**
+ * The last line of the day, about tomorrow — an open loop.
+ *
+ * A finished story is easy to put down; an unfinished one is remembered. So
+ * the day ends by pointing at the next one, and, when true, by telling the
+ * user that what they do today shapes it. Never a promise the pick cannot
+ * keep: a surprise that was asked for is named, nothing else is.
+ */
+export function tomorrowLine(
+  rhythm: { surpriseNext: boolean; surpriseToward: Tag | null } | null,
+): string {
+  if (rhythm?.surpriseNext) {
+    const word = rhythm.surpriseToward
+      ? (adjectiveFor(rhythm.surpriseToward) ?? firstPhrase([rhythm.surpriseToward]))
+      : null;
+    return word
+      ? `Tomorrow is already decided: somewhere ${word}. That is all you get to know.`
+      : 'Tomorrow is already decided, and it is not your usual. That is all you get to know.';
+  }
+  return "Tomorrow's place hasn't been chosen yet. What you keep today is part of how it will be.";
+}
+
 /** Positive-affinity threshold below which a taste is a guess, not a pattern. */
 const REASON_MIN_SCORE = 0.1;
 
@@ -321,6 +418,9 @@ function spell(count: number): string {
   return NUMBER_WORDS[count] ?? String(count);
 }
 
+/** Days of a month before its sentence is worth saying. */
+const MONTH_PATTERN_DAYS = 4;
+
 export interface ShownDay {
   readonly tags: readonly Tag[];
   readonly lat: number;
@@ -336,8 +436,11 @@ export interface ShownDay {
  * fact about their own month. It never scores them and never scolds.
  */
 export function monthInsight(days: readonly ShownDay[]): string {
-  if (days.length < 4) {
-    return 'A few more days, and a pattern will start to show.';
+  if (days.length < MONTH_PATTERN_DAYS) {
+    // A countdown, not "a few more": a near, named finish line is what makes
+    // coming back tomorrow feel like progress (the goal-gradient effect).
+    const left = MONTH_PATTERN_DAYS - days.length;
+    return `${spell(left)} more ${left === 1 ? 'day' : 'days'}, and this month will start to say something about you — maybe something you didn't notice you were choosing.`;
   }
 
   const sentences: string[] = [];
@@ -401,7 +504,12 @@ export interface WorldSummary {
   readonly question: string | null;
   /** What "yes" to the question should steer tomorrow toward. */
   readonly surpriseToward: Tag | null;
+  /** When there is no question yet: how close the first one is. */
+  readonly hint: string | null;
 }
+
+/** From this many kept places on, the map always has a question. */
+const WORLD_QUESTION_AT = 3;
 
 /** Pairs where leaning hard one way makes the other a real surprise. */
 const OPPOSITE: Partial<Record<Tag, Tag>> = {
@@ -424,10 +532,12 @@ const OPPOSITE: Partial<Record<Tag, Tag>> = {
 export function worldSummary(kept: readonly KeptPlace[]): WorldSummary {
   if (kept.length === 0) {
     return {
-      headline: 'Nothing kept yet.',
-      detail: 'Keep a place and it lands here.',
+      headline: 'Your map is still dark.',
+      detail:
+        "Every place you keep becomes a light on it. After a few, the lights start to make a shape, and it isn't always the one you would have drawn yourself.",
       question: null,
       surpriseToward: null,
+      hint: null,
     };
   }
 
@@ -452,8 +562,14 @@ export function worldSummary(kept: readonly KeptPlace[]): WorldSummary {
   const dominant =
     dominantTag && dominantCount / kept.length >= 0.5 ? adjectiveFor(dominantTag) : null;
 
-  const headline =
-    direction && dominant
+  // One or two lights are not a pattern yet, and saying "mostly north" about
+  // a single place would be a guess dressed as an insight.
+  const early = kept.length < WORLD_QUESTION_AT;
+  const headline = early
+    ? kept.length === 1
+      ? 'The first light on your map.'
+      : 'Two lights, and the beginning of a shape.'
+    : direction && dominant
       ? `${direction}, mostly ${dominant}.`
       : direction
         ? `${direction}.`
@@ -468,6 +584,7 @@ export function worldSummary(kept: readonly KeptPlace[]): WorldSummary {
       detail,
       question: "You've never kept anywhere below 40°. Shall tomorrow be somewhere warm?",
       surpriseToward: Tag.WARM,
+      hint: null,
     };
   }
 
@@ -481,14 +598,27 @@ export function worldSummary(kept: readonly KeptPlace[]): WorldSummary {
         ? `Every place you've kept is ${dominant}. Shall tomorrow be somewhere ${oppositeWord}?`
         : `Every place you've kept is ${dominant}. Shall tomorrow be something else?`,
       surpriseToward: opposite,
+      hint: null,
+    };
+  }
+
+  if (early) {
+    const left = WORLD_QUESTION_AT - kept.length;
+    return {
+      headline,
+      detail,
+      question: null,
+      surpriseToward: null,
+      hint: `Keep ${spell(left).toLowerCase()} more ${left === 1 ? 'place' : 'places'}, and your map will have a question for you.`,
     };
   }
 
   return {
     headline,
     detail,
-    question: kept.length >= 3 ? 'Shall tomorrow surprise you?' : null,
+    question: 'Shall tomorrow surprise you?',
     surpriseToward: null,
+    hint: null,
   };
 }
 

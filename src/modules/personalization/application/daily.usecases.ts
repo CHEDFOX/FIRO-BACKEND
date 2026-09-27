@@ -14,6 +14,7 @@ import { ListSavedUseCase } from '../../discovery/application/list-saved.usecase
 import {
   addDays,
   choosePick,
+  cluesFor,
   dailyReason,
   greetingFor,
   localDay,
@@ -21,6 +22,7 @@ import {
   monthInsight,
   timeOfDay,
   type TimeOfDay,
+  tomorrowLine,
   worldSummary,
 } from '../domain/daily';
 import {
@@ -47,6 +49,8 @@ export interface PlaceView {
   readonly region: string | null;
   readonly country: string | null;
   readonly countryCode: string | null;
+  /** IANA zone of the place itself, so a client can say what time it is there. */
+  readonly timeZone: string | null;
 }
 
 export interface TodayView {
@@ -54,6 +58,10 @@ export interface TodayView {
   readonly timeOfDay: TimeOfDay;
   /** The Arrive line: "Somewhere cold and quiet, today." */
   readonly greeting: string;
+  /** Facts about the place revealed one by one before it is shown. */
+  readonly clues: readonly string[];
+  /** The day's last line, about tomorrow. */
+  readonly tomorrow: string;
   readonly experience: PublicExperience;
   readonly place: PlaceView | null;
   readonly reason: string | null;
@@ -80,6 +88,7 @@ async function placeOf(
     region: region?.name ?? null,
     country: country?.name ?? null,
     countryCode: country?.code ?? null,
+    timeZone: place.timezone,
   };
 }
 
@@ -119,15 +128,25 @@ export class GetTodayUseCase {
       experience = chosen.experience;
     }
 
-    const [savedIds, recent] = await Promise.all([
+    const [savedIds, recent, rhythm, placeRecord] = await Promise.all([
       this.saved.savedIds(input.userId),
       this.picks.recent(input.userId, 2),
+      this.rhythms.find(input.userId),
+      this.catalog.findPlaceById(experience.placeId),
     ]);
 
     return {
       day,
       timeOfDay: timeOfDay(localHour(now, input.timeZone)),
       greeting: greetingFor(experience.tags),
+      clues: cluesFor({
+        lat: experience.coordinates.lat,
+        timeZone: placeRecord?.timezone ?? null,
+        elevationMeters: placeRecord?.elevationMeters ?? null,
+        seasonMask: experience.seasonMask,
+        now,
+      }),
+      tomorrow: tomorrowLine(rhythm),
       experience: toPublicExperience(experience),
       place: await placeOf(this.catalog, experience),
       reason: pick.reason,

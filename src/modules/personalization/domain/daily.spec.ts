@@ -3,12 +3,14 @@ import type { Experience } from '../../catalog/domain/experience';
 import {
   addDays,
   choosePick,
+  cluesFor,
   dailyReason,
   greetingFor,
   localDay,
   monthInsight,
   sketchOf,
   timeOfDay,
+  tomorrowLine,
   worldSummary,
 } from './daily';
 import type { ExplorerDna } from './explorer-dna';
@@ -194,10 +196,12 @@ describe('the daily ritual', () => {
   });
 
   describe('monthInsight', () => {
-    it('waits for enough days before claiming a pattern', () => {
-      expect(monthInsight([{ tags: [Tag.COLD], lat: 68, kept: true }])).toBe(
-        'A few more days, and a pattern will start to show.',
-      );
+    // A named, near finish line ("three more days") pulls harder than a vague
+    // one ("a few more"), and it must count down honestly.
+    it('counts down to the first pattern instead of claiming one', () => {
+      const day = { tags: [Tag.COLD], lat: 68, kept: true };
+      expect(monthInsight([day])).toMatch(/^Three more days, and this month will start/);
+      expect(monthInsight([day, day, day])).toMatch(/^One more day, and/);
     });
 
     it('says where the month leaned and what was passed over', () => {
@@ -227,8 +231,27 @@ describe('the daily ritual', () => {
   describe('worldSummary', () => {
     it('is kind about an empty map', () => {
       const summary = worldSummary([]);
-      expect(summary.headline).toBe('Nothing kept yet.');
+      expect(summary.headline).toBe('Your map is still dark.');
       expect(summary.question).toBeNull();
+    });
+
+    // One place is not a pattern. The map says so, and says how close the
+    // first question is instead.
+    it('does not read a pattern into one or two places', () => {
+      const one = worldSummary([{ tags: [Tag.COLD], lat: 20, countryCode: 'MX' }]);
+      expect(one.headline).toBe('The first light on your map.');
+      expect(one.question).toBeNull();
+      expect(one.hint).toBe('Keep two more places, and your map will have a question for you.');
+    });
+
+    it('always has a question once the hint said it would', () => {
+      const summary = worldSummary([
+        { tags: [Tag.CITY], lat: 35, countryCode: 'JP' },
+        { tags: [Tag.DESERT], lat: -13, countryCode: 'PE' },
+        { tags: [Tag.WARM], lat: 10, countryCode: 'TH' },
+      ]);
+      expect(summary.question).toBe('Shall tomorrow surprise you?');
+      expect(summary.hint).toBeNull();
     });
 
     it('speaks the shape of the map and asks one question about tomorrow', () => {
@@ -293,6 +316,61 @@ describe('the daily ritual', () => {
     it('says one word plainly, and nothing when there is nothing', () => {
       expect(sketchOf([Tag.DESERT])).toEqual(['Deserts.']);
       expect(sketchOf([])).toEqual([]);
+    });
+  });
+
+  describe('cluesFor', () => {
+    // Iceland is UTC+0 all year, so 06:40 UTC is 06:40 there.
+    const now = new Date('2026-09-27T06:40:00Z');
+
+    it('reveals the hour, the latitude and the season, without naming the place', () => {
+      const clues = cluesFor({
+        lat: 64.25,
+        timeZone: 'Atlantic/Reykjavik',
+        elevationMeters: 0,
+        seasonMask: seasonMaskFromMonths([9, 10, 11, 12, 1, 2, 3]),
+        now,
+      });
+      expect(clues).toEqual([
+        "It's 06:40 there right now. The day is only just beginning.",
+        'It lies 64° north, further north than most people ever travel.',
+        'And this is one of the best months to be there.',
+      ]);
+    });
+
+    it('speaks of height before latitude, and admits when it is out of season', () => {
+      const clues = cluesFor({
+        lat: 46.6,
+        timeZone: 'Europe/Rome',
+        elevationMeters: 2405,
+        seasonMask: seasonMaskFromMonths([6, 7, 8]),
+        now,
+      });
+      expect(clues).toEqual([
+        "It's 08:40 there right now. The morning is still young.",
+        'It sits 2,400 metres up, where the air is noticeably thinner.',
+        "It's out of season there now: the version of it few people ever see.",
+      ]);
+    });
+
+    it('says nothing it cannot back', () => {
+      expect(
+        cluesFor({ lat: 45, timeZone: null, elevationMeters: null, seasonMask: 4095, now }),
+      ).toEqual([]);
+    });
+  });
+
+  describe('tomorrowLine', () => {
+    it('leaves tomorrow open, and says why today matters to it', () => {
+      expect(tomorrowLine(null)).toBe(
+        "Tomorrow's place hasn't been chosen yet. What you keep today is part of how it will be.",
+      );
+    });
+
+    it('keeps the promise of a surprise without spoiling it', () => {
+      expect(tomorrowLine({ surpriseNext: true, surpriseToward: Tag.WARM })).toBe(
+        'Tomorrow is already decided: somewhere warm. That is all you get to know.',
+      );
     });
   });
 });

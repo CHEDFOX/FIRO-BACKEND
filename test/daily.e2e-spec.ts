@@ -81,6 +81,12 @@ describe('The daily ritual (e2e)', () => {
 
       expect(today.day).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(today.greeting).toMatch(/^Somewhere .+, today\.$/);
+      // Clues come before the place and never give its name away.
+      expect(today.clues.length).toBeGreaterThan(0);
+      for (const clue of today.clues) {
+        expect(clue).not.toContain(today.place.name);
+      }
+      expect(today.tomorrow).toMatch(/^Tomorrow/);
       expect(today.reason).toMatch(/^chosen because you keep choosing /);
       expect(today.place.name).toBeTruthy();
       expect(today.experience.bestSeason).toBeTruthy();

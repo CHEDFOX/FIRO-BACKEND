@@ -52,6 +52,23 @@ taste profile, days and kept places need no migration.
 morning, evening, or no notifications. Sending needs push credentials, which
 do not exist yet.
 
+## The voice: curiosity, never bait
+
+The words are written to make people want to come back, using a few
+well-understood effects. Each has a limit, because a calm product that lies
+to create suspense stops being calm.
+
+| Technique | Where | The limit |
+|---|---|---|
+| **Curiosity gap:** partial information makes the missing part feel urgent | Arrive: the greeting, then up to three clues (local time there, latitude or altitude, season), then "tap to see where" | Every clue is computed from the place's data. No weather, crowds or colour of light we cannot know. Never the name. |
+| **Open loop:** an unfinished story is remembered better than a finished one | The end of "there's more to this place": *Tomorrow's place hasn't been chosen yet. What you keep today is part of how it will be.* | Only claims what is true: keeping does shape the profile. A requested surprise is named, nothing else is promised. |
+| **Goal gradient:** a near, named finish line pulls harder than a vague one | Days: *Three more days, and this month will start to say something about you.* World: *Keep two more places, and your map will have a question for you.* | The countdown matches the rule exactly: at four days there is a sentence, and at three kept places there is always a question. |
+| **Self-discovery:** people are most curious about themselves | Forming (*it will know things about you that you never said*), onboarding subtitles (*There's no wrong answer. There is a telling one.*) | No invented statistics or social proof ("most people…"). |
+| **Withheld reveal:** the photograph is earned by a tap | Arrive, on the first day too | The user can always skip straight past it with one tap. |
+
+No streaks, no counters of missed days, no "don't lose your progress". Firo
+invites; it never nags.
+
 ## Consequences
 
 - Guest rows accumulate. Abandoned guests (no activity for a long time) should
