@@ -78,3 +78,81 @@ export function isInSeason(mask: SeasonMask, month: number): boolean {
   }
   return (mask & (1 << (month - 1))) !== 0;
 }
+
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
+
+/** The months (1-12) set in a season mask, in calendar order. */
+export function monthsInSeason(mask: SeasonMask): number[] {
+  const months: number[] = [];
+  for (let month = 1; month <= 12; month += 1) {
+    if (isInSeason(mask, month)) {
+      months.push(month);
+    }
+  }
+  return months;
+}
+
+/**
+ * A season mask as a person would say it: "December to February",
+ * "June", "All year", "April to May, and September to October".
+ *
+ * Runs wrap across the new year, because winter does: a mask of Dec+Jan+Feb is
+ * one season, not "January to February, and December".
+ */
+export function describeSeason(mask: SeasonMask): string | null {
+  const months = monthsInSeason(mask);
+  if (months.length === 0) {
+    return null;
+  }
+  if (months.length === 12) {
+    return 'All year';
+  }
+
+  // Find contiguous runs on a 12-month circle, starting just after a gap so a
+  // run that wraps December into January is kept whole.
+  const set = new Set(months);
+  let start = 1;
+  while (set.has(start)) {
+    start = (start % 12) + 1;
+  }
+
+  const runs: [number, number][] = [];
+  let runStart: number | null = null;
+  let previous = 0;
+  for (let step = 0; step < 12; step += 1) {
+    const month = ((start - 1 + step) % 12) + 1;
+    if (set.has(month)) {
+      if (runStart === null) {
+        runStart = month;
+      }
+      previous = month;
+    } else if (runStart !== null) {
+      runs.push([runStart, previous]);
+      runStart = null;
+    }
+  }
+  if (runStart !== null) {
+    runs.push([runStart, previous]);
+  }
+
+  const phrases = runs.map(([from, to]) =>
+    from === to ? MONTH_NAMES[from - 1]! : `${MONTH_NAMES[from - 1]} to ${MONTH_NAMES[to - 1]}`,
+  );
+  if (phrases.length === 1) {
+    return phrases[0]!;
+  }
+  return `${phrases.slice(0, -1).join(', ')}, and ${phrases[phrases.length - 1]}`;
+}

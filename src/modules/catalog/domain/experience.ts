@@ -1,5 +1,5 @@
 import { Coordinates } from './geo';
-import { BudgetBand, SeasonMask, Tag } from './taxonomy';
+import { BudgetBand, describeSeason, SeasonMask, Tag } from './taxonomy';
 
 export const ExperienceStatus = {
   DRAFT: 'draft',
@@ -80,6 +80,8 @@ export interface PublicExperience {
   readonly budgetBand: BudgetBand;
   readonly difficulty: number;
   readonly media: MediaRef[];
+  /** When it is at its best, in words: "December to February". */
+  readonly bestSeason: string | null;
 }
 
 export function toPublicExperience(experience: Experience): PublicExperience {
@@ -94,5 +96,6 @@ export function toPublicExperience(experience: Experience): PublicExperience {
     budgetBand: experience.budgetBand,
     difficulty: experience.difficulty,
     media: experience.media,
+    bestSeason: describeSeason(experience.seasonMask),
   };
 }

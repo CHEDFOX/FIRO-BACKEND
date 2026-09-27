@@ -29,8 +29,15 @@ export interface OnboardingOption {
   readonly label: string;
   /** The taste dimensions this option is evidence for. */
   readonly tags: Tag[];
-  /** Illustrative image; the client may show a colour block until it loads. */
-  readonly imageUrl: string | null;
+  /**
+   * The catalogue experience whose photograph illustrates this option.
+   *
+   * Borrowed from the catalogue rather than stored separately, so there is one
+   * media pipeline, not two: uploading a photo for Lofoten in the console
+   * improves the "Cold & quiet" choice in onboarding at the same moment. Null
+   * when nothing in the catalogue fits yet; the client then paints the colour.
+   */
+  readonly imageFrom: string | null;
   readonly dominantColor: string;
 }
 
@@ -48,14 +55,14 @@ export interface OnboardingFlow {
   readonly steps: OnboardingStep[];
 }
 
-function option(id: string, label: string, tags: Tag[], dominantColor: string): OnboardingOption {
-  return {
-    id,
-    label,
-    tags,
-    imageUrl: `https://media.firo.app/onboarding/${id}.jpg`,
-    dominantColor,
-  };
+function option(
+  id: string,
+  label: string,
+  tags: Tag[],
+  dominantColor: string,
+  imageFrom: string | null,
+): OnboardingOption {
+  return { id, label, tags, imageFrom, dominantColor };
 }
 
 /**
@@ -64,7 +71,7 @@ function option(id: string, label: string, tags: Tag[], dominantColor: string): 
  * similar things teaches us almost nothing.
  */
 export const ONBOARDING_FLOW: OnboardingFlow = {
-  version: '1',
+  version: '2',
   steps: [
     {
       id: 'pull',
@@ -73,17 +80,42 @@ export const ONBOARDING_FLOW: OnboardingFlow = {
       subtitle: 'Pick a few. Firo learns the rest.',
       minSelect: 1,
       options: [
-        option('cold_quiet', 'Cold & quiet', [Tag.COLD, Tag.SOLITUDE], '#1B2A3A'),
-        option('warm_water', 'Warm water', [Tag.WARM, Tag.WATER, Tag.BEACH], '#D2A15E'),
-        option('high_places', 'High places', [Tag.MOUNTAINS, Tag.HIKING], '#4A4E55'),
+        option(
+          'cold_quiet',
+          'Cold & quiet',
+          [Tag.COLD, Tag.SOLITUDE],
+          '#1B2A3A',
+          'exp_lofoten_blue_hour',
+        ),
+        option(
+          'warm_water',
+          'Warm water',
+          [Tag.WARM, Tag.WATER, Tag.BEACH],
+          '#D2A15E',
+          'exp_benagil_sea_cave',
+        ),
+        option(
+          'high_places',
+          'High places',
+          [Tag.MOUNTAINS, Tag.HIKING],
+          '#4A4E55',
+          'exp_tre_cime_circuit',
+        ),
         option(
           'old_streets',
           'Old streets',
           [Tag.CULTURE, Tag.HISTORY, Tag.ARCHITECTURE],
           '#3B2418',
+          'exp_gion_lantern_night',
         ),
-        option('empty_land', 'Empty land', [Tag.DESERT, Tag.MINIMALISM, Tag.SOLITUDE], '#C08A4E'),
-        option('good_food', 'Good food', [Tag.FOOD, Tag.CITY], '#7A3B2E'),
+        option(
+          'empty_land',
+          'Empty land',
+          [Tag.DESERT, Tag.MINIMALISM, Tag.SOLITUDE],
+          '#C08A4E',
+          'exp_erg_chebbi_silence',
+        ),
+        option('good_food', 'Good food', [Tag.FOOD, Tag.CITY], '#7A3B2E', null),
       ],
     },
     {
@@ -98,12 +130,14 @@ export const ONBOARDING_FLOW: OnboardingFlow = {
           'Nobody around, just the view',
           [Tag.SOLITUDE, Tag.NATURE],
           '#12181F',
+          'exp_vestrahorn_black_sand',
         ),
         option(
           'busy_night',
           'A loud table full of strangers',
           [Tag.SOCIAL, Tag.NIGHTLIFE],
           '#5B2A45',
+          'exp_gion_lantern_night',
         ),
       ],
     },
@@ -119,8 +153,9 @@ export const ONBOARDING_FLOW: OnboardingFlow = {
           'Four hours uphill to get there',
           [Tag.HIKING, Tag.ADVENTURE, Tag.CAMPING],
           '#3F5540',
+          'exp_wanaka_roy_peak',
         ),
-        option('easy_it', 'Somewhere comfortable, already set up', [Tag.LUXURY], '#6B5B73'),
+        option('easy_it', 'Somewhere comfortable, already set up', [Tag.LUXURY], '#6B5B73', null),
       ],
     },
     {
@@ -130,10 +165,22 @@ export const ONBOARDING_FLOW: OnboardingFlow = {
       subtitle: null,
       minSelect: 1,
       options: [
-        option('photos', 'Photographs', [Tag.PHOTOGRAPHY], '#24384B'),
-        option('stories', 'Stories', [Tag.ADVENTURE, Tag.ROAD_TRIP], '#5B6E7A'),
-        option('quiet_head', 'A quieter head', [Tag.SOLITUDE, Tag.MINIMALISM], '#2C3B2A'),
-        option('wild_sight', 'Something wild', [Tag.WILDLIFE, Tag.NATURE], '#3F5540'),
+        option('photos', 'Photographs', [Tag.PHOTOGRAPHY], '#24384B', 'exp_hamnoy_bridge_dawn'),
+        option(
+          'stories',
+          'Stories',
+          [Tag.ADVENTURE, Tag.ROAD_TRIP],
+          '#5B6E7A',
+          'exp_machu_picchu_first_light',
+        ),
+        option(
+          'quiet_head',
+          'A quieter head',
+          [Tag.SOLITUDE, Tag.MINIMALISM],
+          '#2C3B2A',
+          'exp_arashiyama_bamboo_dawn',
+        ),
+        option('wild_sight', 'Something wild', [Tag.WILDLIFE, Tag.NATURE], '#3F5540', null),
       ],
     },
   ],

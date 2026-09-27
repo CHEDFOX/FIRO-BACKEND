@@ -14,6 +14,9 @@ consequences, and the alternatives rejected.
 | [0007](0007-async-explorer-dna.md) | Explorer DNA evolves asynchronously |
 | [0008](0008-flutter-client.md) | Flutter for the client renderer *(confirm before Phase 5)* |
 | [0009](0009-openapi-single-source-of-truth.md) | OpenAPI 3.1 as the single contract source |
+| [0010](0010-admin-read-model.md) | Admin console reads through its own read model |
+| [0011](0011-images-on-the-vps.md) | Images on the VPS's own disk, served by nginx |
+| [0012](0012-one-place-a-day.md) | One place a day, with guest accounts |
 
 ## Status legend
 - **Accepted (Phase 1)** — agreed as part of the Phase 1 architecture.

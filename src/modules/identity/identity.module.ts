@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { GetCurrentUserUseCase } from './application/get-current-user.usecase';
+import { ClaimAccountUseCase, StartGuestSessionUseCase } from './application/guest.usecases';
 import { LoginUseCase } from './application/login.usecase';
 import { RefreshSessionUseCase } from './application/refresh-session.usecase';
 import { RegisterUserUseCase } from './application/register-user.usecase';
@@ -55,6 +56,8 @@ import { JoseTokenIssuer } from './infrastructure/tokens/jose-token-issuer';
     RefreshSessionUseCase,
     RevokeSessionUseCase,
     GetCurrentUserUseCase,
+    StartGuestSessionUseCase,
+    ClaimAccountUseCase,
     // Guards (reusable by other contexts)
     JwtAuthGuard,
     RolesGuard,

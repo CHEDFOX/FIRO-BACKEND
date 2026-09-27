@@ -23,6 +23,12 @@ export interface User {
   readonly locale: string;
   readonly roles: Role[];
   readonly status: UserStatus;
+  /**
+   * An account with no credentials yet. Onboarding happens before sign-up, so
+   * the taste profile needs an owner from the first tap; claiming the account
+   * later fills in email and password on this same row.
+   */
+  readonly isGuest: boolean;
   readonly createdAt: string; // ISO-8601
   readonly updatedAt: string; // ISO-8601
   readonly version: number;
@@ -35,6 +41,7 @@ export interface PublicUser {
   readonly email: string | null;
   readonly displayName: string | null;
   readonly roles: Role[];
+  readonly isGuest: boolean;
   readonly createdAt: string;
 }
 
@@ -45,6 +52,7 @@ export function toPublicUser(user: User): PublicUser {
     email: user.email,
     displayName: user.displayName,
     roles: user.roles,
+    isGuest: user.isGuest,
     createdAt: user.createdAt,
   };
 }

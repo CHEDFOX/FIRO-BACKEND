@@ -1,12 +1,17 @@
-import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Inject, Post, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
 import { AppError } from '../../../../shared/errors/app-error';
+import {
+  CATALOG_REPOSITORY,
+  type CatalogRepository,
+} from '../../../catalog/domain/catalog.repository';
 import { ZodValidationPipe } from '../../../../shared/http/zod-validation.pipe';
 import { AuthenticatedUser } from '../../../identity/infrastructure/http/authenticated-user';
 import { CurrentUser, Public } from '../../../identity/infrastructure/http/decorators';
 import { JwtAuthGuard } from '../../../identity/infrastructure/http/jwt-auth.guard';
 import { GetDnaUseCase } from '../../application/get-dna.usecase';
 import { SubmitOnboardingUseCase } from '../../application/submit-onboarding.usecase';
+import { sketchOf } from '../../domain/daily';
 import { ONBOARDING_FLOW } from '../../domain/onboarding';
 
 export const SubmitOnboardingSchema = z.object({
@@ -35,12 +40,50 @@ export class OnboardingController {
   constructor(
     private readonly submitOnboarding: SubmitOnboardingUseCase,
     private readonly getDna: GetDnaUseCase,
+    @Inject(CATALOG_REPOSITORY) private readonly catalog: CatalogRepository,
   ) {}
 
+  /**
+   * The flow, with each option's photograph resolved from the catalogue.
+   *
+   * An option whose experience has no photograph yet (or none at all) comes
+   * back with `image: null`, and the client paints its colour instead — so the
+   * flow is complete from day one and gets more beautiful as the catalogue
+   * does, with no release in between.
+   */
   @Get()
   @Public()
-  flow() {
-    return ONBOARDING_FLOW;
+  async flow() {
+    const ids = ONBOARDING_FLOW.steps.flatMap((step) =>
+      step.options.flatMap((option) => (option.imageFrom ? [option.imageFrom] : [])),
+    );
+    const experiences = new Map(
+      (await this.catalog.findExperiencesByIds([...new Set(ids)])).map((experience) => [
+        experience.id,
+        experience,
+      ]),
+    );
+
+    return {
+      ...ONBOARDING_FLOW,
+      steps: ONBOARDING_FLOW.steps.map((step) => ({
+        ...step,
+        options: step.options.map((option) => {
+          const media = option.imageFrom
+            ? (experiences.get(option.imageFrom)?.media[0] ?? null)
+            : null;
+          return {
+            id: option.id,
+            label: option.label,
+            tags: option.tags,
+            dominantColor: media?.dominantColor ?? option.dominantColor,
+            image: media
+              ? { url: media.url, variants: media.variants ?? [], alt: media.alt ?? null }
+              : null,
+          };
+        }),
+      })),
+    };
   }
 
   @Post('answers')
@@ -61,6 +104,11 @@ export class OnboardingController {
     // Firo just learned about them — the payoff that makes onboarding feel
     // worth completing.
     const profile = await this.getDna.execute(principal.userId);
-    return { ...result, profile };
+    return {
+      ...result,
+      profile,
+      // The first sketch, in words, for the screen right after onboarding.
+      sketch: sketchOf(profile.topTastes.map((taste) => taste.tag)),
+    };
   }
 }

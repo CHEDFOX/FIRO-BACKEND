@@ -3,6 +3,7 @@ import { AppError } from '../../../../shared/errors/app-error';
 import { ZodValidationPipe } from '../../../../shared/http/zod-validation.pipe';
 import { PublicAuthResult } from '../../application/auth-result';
 import { GetCurrentUserUseCase } from '../../application/get-current-user.usecase';
+import { ClaimAccountUseCase, StartGuestSessionUseCase } from '../../application/guest.usecases';
 import { LoginUseCase } from '../../application/login.usecase';
 import { RefreshSessionUseCase } from '../../application/refresh-session.usecase';
 import { RegisterUserUseCase } from '../../application/register-user.usecase';
@@ -10,6 +11,10 @@ import { RevokeSessionUseCase } from '../../application/revoke-session.usecase';
 import { PublicUser, toPublicUser } from '../../domain/user';
 import { AuthenticatedUser } from './authenticated-user';
 import {
+  ClaimInput,
+  ClaimSchema,
+  GuestInput,
+  GuestSchema,
   LoginInput,
   LoginSchema,
   LogoutInput,
@@ -36,7 +41,39 @@ export class AuthController {
     private readonly refreshSession: RefreshSessionUseCase,
     private readonly revokeSession: RevokeSessionUseCase,
     private readonly getCurrentUser: GetCurrentUserUseCase,
+    private readonly startGuest: StartGuestSessionUseCase,
+    private readonly claimAccount: ClaimAccountUseCase,
   ) {}
+
+  /**
+   * An account before a sign-up. Called on the first tap of the app, so the
+   * onboarding answers have an owner before anyone is asked for an email.
+   */
+  @Post('guest')
+  @Public()
+  async guest(
+    @Body(new ZodValidationPipe(GuestSchema)) body: GuestInput,
+  ): Promise<PublicAuthResult> {
+    const result = await this.startGuest.execute(body);
+    return { user: toPublicUser(result.user), tokens: result.tokens };
+  }
+
+  /**
+   * Turns the current guest into a full account, in place. Same user id, so the
+   * taste profile, keeps and daily history all carry over untouched.
+   */
+  @Post('claim')
+  @HttpCode(200)
+  async claim(
+    @Body(new ZodValidationPipe(ClaimSchema)) body: ClaimInput,
+    @CurrentUser() principal: AuthenticatedUser | undefined,
+  ): Promise<PublicAuthResult> {
+    if (!principal) {
+      throw AppError.unauthenticated();
+    }
+    const result = await this.claimAccount.execute({ ...body, userId: principal.userId });
+    return { user: toPublicUser(result.user), tokens: result.tokens };
+  }
 
   @Post('register')
   @Public()

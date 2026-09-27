@@ -49,6 +49,7 @@ export class RegisterUserUseCase {
       locale: command.locale?.trim() || 'en',
       roles: this.config.adminEmails.includes(email) ? [Role.USER, Role.ADMIN] : [Role.USER],
       status: UserStatus.ACTIVE,
+      isGuest: false,
       createdAt: now,
       updatedAt: now,
       version: 0,

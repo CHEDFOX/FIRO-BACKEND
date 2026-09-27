@@ -14,6 +14,7 @@ interface UserRow {
   locale: string;
   roles: string[];
   status: string;
+  is_guest: boolean;
   created_at: Date;
   updated_at: Date;
   version: string;
@@ -30,6 +31,7 @@ function toUser(row: UserRow): User {
     locale: row.locale,
     roles: row.roles as Role[],
     status: row.status as UserStatus,
+    isGuest: row.is_guest,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
     // bigint arrives as a string from pg (it exceeds JS safe integers).
@@ -39,7 +41,7 @@ function toUser(row: UserRow): User {
 
 const COLUMNS = `
   id, handle, email, email_verified, password_hash, display_name,
-  locale, roles, status, created_at, updated_at, version
+  locale, roles, status, is_guest, created_at, updated_at, version
 `;
 
 /**
@@ -79,8 +81,8 @@ export class PostgresUserRepository implements UserRepository {
     await this.db.query(
       `INSERT INTO identity.users
          (id, handle, email, email_verified, password_hash, display_name,
-          locale, roles, status, created_at, updated_at, version)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          locale, roles, status, is_guest, created_at, updated_at, version)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        ON CONFLICT (id) DO UPDATE SET
          handle = EXCLUDED.handle,
          email = EXCLUDED.email,
@@ -90,6 +92,7 @@ export class PostgresUserRepository implements UserRepository {
          locale = EXCLUDED.locale,
          roles = EXCLUDED.roles,
          status = EXCLUDED.status,
+         is_guest = EXCLUDED.is_guest,
          updated_at = EXCLUDED.updated_at,
          version = EXCLUDED.version`,
       [
@@ -102,6 +105,7 @@ export class PostgresUserRepository implements UserRepository {
         user.locale,
         user.roles,
         user.status,
+        user.isGuest,
         user.createdAt,
         user.updatedAt,
         user.version,

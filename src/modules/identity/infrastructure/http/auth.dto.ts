@@ -38,3 +38,18 @@ export const LogoutSchema = z.object({
   refreshToken: z.string().min(10),
 });
 export type LogoutInput = z.infer<typeof LogoutSchema>;
+
+export const GuestSchema = z.object({
+  locale: z.string().trim().min(2).max(35).optional(),
+  deviceId,
+});
+export type GuestInput = z.infer<typeof GuestSchema>;
+
+export const ClaimSchema = z.object({
+  email,
+  password,
+  handle: handle.optional(),
+  displayName: z.string().trim().min(1).max(80).optional(),
+  deviceId,
+});
+export type ClaimInput = z.infer<typeof ClaimSchema>;

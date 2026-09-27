@@ -3,13 +3,21 @@ import { CatalogModule } from '../catalog/catalog.module';
 import { DiscoveryModule } from '../discovery/discovery.module';
 import { IdentityModule } from '../identity/identity.module';
 import { BuildFeedUseCase } from './application/build-feed.usecase';
+import {
+  GetTodayUseCase,
+  GetWorldUseCase,
+  ListDaysUseCase,
+  RhythmUseCases,
+} from './application/daily.usecases';
 import { GetDnaUseCase } from './application/get-dna.usecase';
 import { RecordSignalUseCase } from './application/record-signal.usecase';
 import { SubmitOnboardingUseCase } from './application/submit-onboarding.usecase';
+import { DAILY_PICK_REPOSITORY, RHYTHM_REPOSITORY } from './domain/daily.repository';
 import { DNA_REPOSITORY } from './domain/dna.repository';
 import { HeuristicScorer, SCORER } from './domain/scorer';
 import { SESSION_INTENT_REPOSITORY } from './domain/session-intent';
 import { SIGNAL_REPOSITORY } from './domain/signal';
+import { DailyController } from './infrastructure/http/daily.controller';
 import { OnboardingController } from './infrastructure/http/onboarding.controller';
 import { PersonalizationController } from './infrastructure/http/personalization.controller';
 import { repositoryProvider } from '../../infrastructure/database/repository-provider';
@@ -18,6 +26,12 @@ import {
   InMemorySessionIntentRepository,
   InMemorySignalRepository,
 } from './infrastructure/persistence/in-memory-personalization.repository';
+import {
+  InMemoryDailyPickRepository,
+  InMemoryRhythmRepository,
+  PostgresDailyPickRepository,
+  PostgresRhythmRepository,
+} from './infrastructure/persistence/daily.repositories';
 import {
   PostgresDnaRepository,
   PostgresSignalRepository,
@@ -31,7 +45,7 @@ import {
  */
 @Module({
   imports: [IdentityModule, CatalogModule, DiscoveryModule],
-  controllers: [PersonalizationController, OnboardingController],
+  controllers: [PersonalizationController, OnboardingController, DailyController],
   providers: [
     InMemoryDnaRepository,
     InMemorySignalRepository,
@@ -45,6 +59,21 @@ import {
     BuildFeedUseCase,
     GetDnaUseCase,
     SubmitOnboardingUseCase,
+    // The daily ritual
+    InMemoryDailyPickRepository,
+    PostgresDailyPickRepository,
+    repositoryProvider(
+      DAILY_PICK_REPOSITORY,
+      PostgresDailyPickRepository,
+      InMemoryDailyPickRepository,
+    ),
+    InMemoryRhythmRepository,
+    PostgresRhythmRepository,
+    repositoryProvider(RHYTHM_REPOSITORY, PostgresRhythmRepository, InMemoryRhythmRepository),
+    GetTodayUseCase,
+    ListDaysUseCase,
+    GetWorldUseCase,
+    RhythmUseCases,
   ],
   exports: [GetDnaUseCase, DNA_REPOSITORY, InMemoryDnaRepository, InMemorySignalRepository],
 })
